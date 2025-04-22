@@ -23,16 +23,9 @@ echo "System update completed."
 
 # Define pacman packages
 PACMAN_PACKAGES=(
-    openjdk-jdk
-    firefox
-    neovim
+    git
     plymouth
-    fuse
     steam
-    wine winetricks
-    wine-mono
-    wine-gecko
-    partitionmanager
 )
 # Install basic tools with pacman
 echo "Pacman will install the following packages:"
@@ -68,14 +61,6 @@ sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
 FLATPAK_PACKAGES=(
     com.spotify.Client
     com.discordapp.Discord
-    org.gnome.Boxes
-    org.videolan.VLC
-    com.github.tchx84.Flatseal
-    org.qbittorrent.qBittorrent
-    com.usebottles.bottles
-    net.davidotek.pupgui2                   #ProtonUp-Qt
-    org.libreoffice.LibreOffice
-    com.stremio.Stremio
 )
 
 # Flatpak setup
