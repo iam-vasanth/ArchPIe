@@ -116,8 +116,12 @@ else
     echo "yay is already installed."
 fi
 
+echo "Installing AUR packages using yay..."
+printf "  %s\n" "${AUR_PACKAGES[@]}"
+sudo -u $ACTUAL_USER bash -c "yay -S --needed --noconfirm ${AUR_PACKAGES[*]}"
 
-sudo pacman -S --needed git base-devel
-git clone https://aur.archlinux.org/yay.git
-cd yay
-makepkg -si
+
+
+sed 's$\(base udev\)$\1 plymouth$' /etc/mkinitcpio.conf
+
+sed -e 's$\(base udev\)$\1 plymouth$' -e 's$\(HOOKS\)$\1 another-pattern$' /etc/mkinitcpio.conf
