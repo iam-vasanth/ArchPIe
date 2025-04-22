@@ -1,11 +1,6 @@
 #!/bin/bash
 
-# Arch Linux Application Installation Script
-# This script installs common applications using pacman, flatpak, and yay
-# It will automatically request sudo privileges if not run with them
-# Added confirmation prompts for each package manager's installations
-
-# Check if script is run as root/sudo and re-run with sudo if not
+# To run the script with sudo privileges
 if [ "$EUID" -ne 0 ]; then
     echo "Script not running with sudo privileges. Elevating permissions..."
     exec sudo "$0" "$@"
@@ -19,33 +14,16 @@ if [ -z "$ACTUAL_USER" ]; then
 fi
 HOME_DIR="/home/$ACTUAL_USER"
 
-echo "===== Starting Arch Linux application installation ====="
-echo "Running as root, installing for user: $ACTUAL_USER"
+# Updating the system
+echo " Updating system.... "
+sudo pacman -Syu --noconfirm
+echo "System update completed."
 
-# Function to ask for confirmation
-confirm() {
-    read -p "$1 [y/N]: " response
-    case "$response" in
-        [yY][eE][sS]|[yY]) 
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
-# Update system first
-if confirm "Do you want to update the system? /n IT IS MANDATORY $RED"; then
-    echo "Updating system..."
-    pacman -Syu --noconfirm
-else
-    echo "Skipping system update."
-fi
+# Pacman packages installation
 
 # Define pacman packages
 PACMAN_PACKAGES=(
-    timeshift
+    openjdk-jdk
     firefox
     neovim
     plymouth
@@ -56,16 +34,14 @@ PACMAN_PACKAGES=(
     wine-gecko
     partitionmanager
 )
-
 # Install basic tools with pacman
 echo "Pacman will install the following packages:"
 printf "  %s\n" "${PACMAN_PACKAGES[@]}"
-if confirm "Do you want to proceed with pacman installations?"; then
-    echo "Installing basic tools with pacman..."
-    pacman -S "${PACMAN_PACKAGES[@]}"
-else
-    echo "Skipping pacman installations."
-fi
+echo "Installing basic tools with pacman..."
+sudo pacman -S "${PACMAN_PACKAGES[@]}"
+echo "Installing pacman packages completed."
+
+# Virt-manager installation and complete setup
 
 # Define packages for virt-manager
 VIRT_MANAGAER=(
@@ -82,21 +58,15 @@ VIRT_MANAGAER=(
     swtpm
 )
 
-#Virt-manager installation and setup
+echo "Installing virt-manager and dependencies..."
 echo "Installing following packages:"
 printf "  %s\n" "${VIRT_MANAGAER[@]}"
-if confirm "Do you want to proceed with Virt-manager installation and setup?"; then
-    echo "Installing tools needed for virt-manager..."
-    pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
-else
-    echo "Skipping virt-manager installations."
-fi
+echo "Installing tools needed for virt-manager..."
+sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
 
 # Define flatpak packages
 FLATPAK_PACKAGES=(
-    com.vscodium.codium
     com.spotify.Client
-    org.ferdium.Ferdium
     com.discordapp.Discord
     org.gnome.Boxes
     org.videolan.VLC
@@ -108,141 +78,72 @@ FLATPAK_PACKAGES=(
     com.stremio.Stremio
 )
 
-# Install and configure flatpak
-if confirm "Do you want to set up Flatpak and install Flatpak applications?"; then
-    echo "Setting up Flatpak..."
-    pacman -S --needed --noconfirm flatpak
-    
-    # Switch to user context for flatpak configuration
-    echo "Configuring Flatpak as user $ACTUAL_USER..."
-    sudo -u $ACTUAL_USER flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-    
-    # Install applications via Flatpak
-    echo "Installing applications via Flatpak..."
-    echo "Flatpak will install the following packages:"
-    printf "  %s\n" "${FLATPAK_PACKAGES[@]}"
-    sudo -u $ACTUAL_USER flatpak install -y flathub "${FLATPAK_PACKAGES[@]}"
-else
-    echo "Skipping Flatpak setup and installations."
-fi
+# Flatpak setup
+echo "Setting up flatpak..."
+pacman -S --noconfirm flatpak
+
+# Switch to user context for flatpak configuration
+echo "Configuring Flatpak as user $ACTUAL_USER..."
+sudo -u $ACTUAL_USER flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+# Install flatpak packages
+echo "Installing applications via Flatpak..."
+echo "Flatpak will install the following packages:"
+printf "  %s\n" "${FLATPAK_PACKAGES[@]}"
+sudo -u $ACTUAL_USER flatpak install -y flathub "${FLATPAK_PACKAGES[@]}"
 
 # Define AUR packages
 AUR_PACKAGES=(
-    google-chrome
-    visual-studio-code-bin
-    spotify
-    teams
-    dropbox
-    etcher-bin
-    zoom
-    brave-bin
-    bitwarden-bin
-    postman-bin
-    insomnia
-    nodejs-lts-gallium
-    docker-compose
-    sublime-text-4
+    vscoidum
+    plymouth-theme-monoarch
 )
 
-# Install yay AUR helper if not already installed
-if confirm "Do you want to install yay AUR helper (if not already installed) and AUR packages?"; then
-    if ! command -v yay &> /dev/null; then
-        echo "Installing yay AUR helper..."
-        # Create temporary directory
-        TMP_DIR=$(mktemp -d)
-        chown $ACTUAL_USER:$ACTUAL_USER $TMP_DIR
-        
-        # Clone and build yay as the regular user
-        cd $TMP_DIR
-        sudo -u $ACTUAL_USER git clone https://aur.archlinux.org/yay.git
-        cd yay
-        sudo -u $ACTUAL_USER makepkg -si --noconfirm
-        
-        # Clean up
-        cd /
-        rm -rf $TMP_DIR
-    fi
+if ! command -v yay &> /dev/null; then
+    echo "Installing yay AUR helper..."
     
-    # Install packages from AUR using yay (must be run as regular user)
-    echo "Installing AUR packages using yay..."
-    echo "Yay will install the following packages:"
-    printf "  %s\n" "${AUR_PACKAGES[@]}"
-    sudo -u $ACTUAL_USER bash -c "yay -S --needed --noconfirm ${AUR_PACKAGES[*]}"
-else
-    echo "Skipping yay installation and AUR packages."
-fi
-
-# Define development packages
-DEV_PACKAGES=(
-    python
-    python-pip
-    npm
-    docker
-    rust
-    go
-    jdk-openjdk
-    maven
-)
-
-# Setup development environments
-echo "Development packages to install:"
-printf "  %s\n" "${DEV_PACKAGES[@]}"
-if confirm "Do you want to set up development environments?"; then
-    echo "Setting up development environments..."
-    pacman -S --needed --noconfirm "${DEV_PACKAGES[@]}"
+    # Create and switch to a temporary directory
+    TMP_DIR=$(mktemp -d)
+    trap "rm -rf $TMP_DIR" EXIT  # Ensure cleanup on script exit
+    chown "$ACTUAL_USER:$ACTUAL_USER" "$TMP_DIR"
+    sudo -u "$ACTUAL_USER" git clone https://aur.archlinux.org/yay.git "$TMP_DIR/yay"
     
-    # Enable and start docker service
-    if confirm "Do you want to enable and start the Docker service?"; then
-        echo "Enabling Docker service..."
-        systemctl enable docker.service
-        systemctl start docker.service
-        usermod -aG docker $ACTUAL_USER
-    else
-        echo "Skipping Docker service setup."
-    fi
+    # Build and install yay
+    cd "$TMP_DIR/yay"
+    sudo -u "$ACTUAL_USER" makepkg -si --noconfirm
+    
+    echo "yay installation completed."
 else
-    echo "Skipping development environment setup."
+    echo "yay is already installed."
 fi
 
-# Define font packages
-FONT_PACKAGES=(
-    ttf-dejavu
-    ttf-liberation
-    ttf-droid
-    ttf-ubuntu-font-family
-    noto-fonts
-    ttf-roboto
-    ttf-fira-code
-)
+echo "Installing AUR packages using yay..."
+printf "  %s\n" "${AUR_PACKAGES[@]}"
+sudo -u $ACTUAL_USER bash -c "yay -S --needed --noconfirm ${AUR_PACKAGES[*]}"
 
-# Install fonts
-echo "Font packages to install:"
-printf "  %s\n" "${FONT_PACKAGES[@]}"
-if confirm "Do you want to install additional fonts?"; then
-    echo "Installing fonts..."
-    pacman -S --needed --noconfirm "${FONT_PACKAGES[@]}"
+# Setting up plymouth with monoarch theme
+echo "Configuring plymouth..."
+sed -i '/^HOOKS/s/\budev\b/& plymouth/' /etc/mkinitcpio.conf
+sudo mkinitcpio -p linux
+
+# Adds plumouth to grub
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/s/\bquiet\b/& splash rd.udev.log_priority=3 vt.global_cursor_default=0/' /home/zoro/Documents/Projects/Arch-postinstallation/grub
+
+# Ensures system boots into linux kernel instead of linux-lts bby default
+sed -i '/^GRUB_CMDLINE_LINUX=/a \\n# Linux-LTS to Linux\nGRUB_TOP_LEVEL="/boot/vmlinuz-linux"' /home/zoro/Documents/Projects/Arch-postinstallation/grub
+
+# Build grub configuration
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+if [ -d "/usr/share/plymouth/themes/monoarch" ]; then
+    echo "Monoarch theme already exists."
 else
-    echo "Skipping font installation."
+    echo "Installing monoarch theme..."
+    yay -S --noconfirm plymouth-theme-monoarch
 fi
 
-# Define gaming packages
-GAMING_PACKAGES=(
-    steam
-    lutris
-    wine
-    winetricks
-)
+# Apply the monoarch theme
+sudo plymouth-set-default-theme -R monoarch
+echo "Installed monoarch theme successfully."
 
-# Install gaming tools
-echo "Gaming packages to install:"
-printf "  %s\n" "${GAMING_PACKAGES[@]}"
-if confirm "Do you want to install gaming tools?"; then
-    echo "Installing gaming tools..."
-    pacman -S --needed --noconfirm "${GAMING_PACKAGES[@]}"
-else
-    echo "Skipping gaming tools installation."
-fi
-
-echo "===== Installation complete! ====="
-echo "You may need to log out and back in for some changes to take effect."
-echo "Note: Some applications might appear in both pacman and AUR lists as alternatives."
+echo "Completed all installations and configurations succesfully."
+echo "Rebooting system to apply all changes."

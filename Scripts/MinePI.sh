@@ -144,3 +144,6 @@ fi
 # Apply the monoarch theme
 sudo plymouth-set-default-theme -R monoarch
 echo "Installed monoarch theme successfully."
+
+echo "Completed all installations and configurations succesfully."
+echo "Rebooting system to apply all changes."
