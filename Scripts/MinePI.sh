@@ -120,8 +120,27 @@ echo "Installing AUR packages using yay..."
 printf "  %s\n" "${AUR_PACKAGES[@]}"
 sudo -u $ACTUAL_USER bash -c "yay -S --needed --noconfirm ${AUR_PACKAGES[*]}"
 
+# Setting up plymouth with monoarch theme
+echo "Configuring plymouth..."
+sed -i '/^HOOKS/s/\budev\b/& plymouth/' /etc/mkinitcpio.conf
+sudo mkinitcpio -p linux
 
+# Adds plumouth to grub
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/s/\bquiet\b/& splash rd.udev.log_priority=3 vt.global_cursor_default=0/' /home/zoro/Documents/Projects/Arch-postinstallation/grub
 
-sed 's$\(base udev\)$\1 plymouth$' /etc/mkinitcpio.conf
+# Ensures system boots into linux kernel instead of linux-lts bby default
+sed -i '/^GRUB_CMDLINE_LINUX=/a \\n# Linux-LTS to Linux\nGRUB_TOP_LEVEL="/boot/vmlinuz-linux"' /home/zoro/Documents/Projects/Arch-postinstallation/grub
 
-sed -e 's$\(base udev\)$\1 plymouth$' -e 's$\(HOOKS\)$\1 another-pattern$' /etc/mkinitcpio.conf
+# Build grub configuration
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+if [ -d "/usr/share/plymouth/themes/monoarch" ]; then
+    echo "Monoarch theme already exists."
+else
+    echo "Installing monoarch theme..."
+    yay -S --noconfirm plymouth-theme-monoarch
+fi
+
+# Apply the monoarch theme
+sudo plymouth-set-default-theme -R monoarch
+echo "Installed monoarch theme successfully."
