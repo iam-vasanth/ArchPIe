@@ -7,6 +7,9 @@ if [ "$EUID" -ne 0 ]; then
     exit $?
 fi
 
+# Extracting the network device name for ufw configuration (Virt-manager)
+NetDevice=$(ip route | awk '/default/ {print $5}')
+
 # Store the actual username (not root)
 ACTUAL_USER=$(logname || echo $SUDO_USER)
 if [ -z "$ACTUAL_USER" ]; then
@@ -15,7 +18,7 @@ fi
 HOME_DIR="/home/$ACTUAL_USER"
 
 # Updating the system
-echo " Updating system.... "
+echo "Updating system.... "
 sudo pacman -Syu --noconfirm
 echo "System update completed."
 
@@ -23,6 +26,7 @@ echo "System update completed."
 
 # Define pacman packages
 PACMAN_PACKAGES=(
+    lib32-nvidia-utils
     openjdk-jdk
     firefox
     neovim
@@ -35,34 +39,32 @@ PACMAN_PACKAGES=(
     partitionmanager
 )
 # Install basic tools with pacman
-echo "Pacman will install the following packages:"
-printf "  %s\n" "${PACMAN_PACKAGES[@]}"
 echo "Installing basic tools with pacman..."
-sudo pacman -S "${PACMAN_PACKAGES[@]}"
+sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
 echo "Installing pacman packages completed."
 
 # Virt-manager installation and complete setup
 
 # Define packages for virt-manager
 VIRT_MANAGAER=(
-    qemu
+    qemu-full
     virt-manager
     virt-viewer
-    dnsmasq
-    vde2
     bridge-utils
-    openbsd-netcat
-    ebtables
-    iptables
     libguestfs
     swtpm
 )
 
 echo "Installing virt-manager and dependencies..."
-echo "Installing following packages:"
-printf "  %s\n" "${VIRT_MANAGAER[@]}"
-echo "Installing tools needed for virt-manager..."
 sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
+
+# Configuring UFW for virt-manager
+echo "configuring UFW for virt-manager..."
+sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
+sed "$a \\n# Allow forwarding for libvirt\n*nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 192.168.122.0/24 -o '$NetDevice' -j MASQUERADE\nCOMMIT" /home/zoro/Documents/Projects/Arch-postinstallation/before.rules
+sudo ufw enable
+sudo systemctl enable --now ufw
+echo "Virt-manager installation completed."
 
 # Define flatpak packages
 FLATPAK_PACKAGES=(

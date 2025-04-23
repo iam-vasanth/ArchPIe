@@ -26,12 +26,9 @@ sudo pacman -S --needed firefox neovim plymouth fuse steam wine winetricks wine-
 
 **Virt-manager setup**
 
-sudo pacman -S qemu virt-manager virt-viewer dnsmasq vde2 bridge-utils openbsd-netcat ebtables iptables libguestfs swtpm
+sudo pacman -S qemu-full libvirt-daemon virt-manager virt-viewer bridge-utils libguestfs swtpm
 sudo systemctl enable --now libvirtd
-sudoorg.libreoffice.LibreOffice usermod -aG libvirt zoro
-sudo systemctl restart libvirtd
-sudo virsh net-start default
-sudo virsh net-autostart default
+sudo usermod -aG libvirt zoro
 
 ===========================================================================================================================
 
@@ -79,3 +76,26 @@ Add this following line
 
 # Linux-LTS to Linux
 GRUB_TOP_LEVEL="/boot/vmlinuz-linux"
+
+# How to make network connectinon in guest with UFW firewall on your host system
+
+sudo nvim /etc/default/ufw
+
+Change DROP to ACCEPT
+
+DEFAULT_FORWARD_POLICY="ACCEPT"
+
+sudo nvim /etc/ufw/before.rules
+
+Add this below block at the end.
+
+# Allow forwarding for libvirtd
+*nat
+:POSTROUTING ACCEPT [0:0]
+-A POSTROUTING -s 192.168.122.0/24 -o wlan0 -j MASQUERADE
+commit
+
+Add this below block after "*filter" before "commit"
+
+-A ufw-before-forward -i virbr0 -j ACCEPT
+-A ufw-before-forward -o virbr0 -j ACCEPT
