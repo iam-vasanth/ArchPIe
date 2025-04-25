@@ -74,7 +74,7 @@ mkfs.ext4 /dev/[Root partition disk name]
 mkfs.ext4 /dev/[Home partition disk name]
 
 # mounting the file system
-mount /dev/[partition] /mnt 
+mount /dev/[partition] /mnt
 mount --mkdir /dev/[partition] /mnt/boot
 mount --mkdir /dev/[partition] /mnt/home
 

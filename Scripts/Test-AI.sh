@@ -7,7 +7,6 @@ echo "==> Welcome to the Arch Auto-Reinstall Script"
 HOSTNAME="Enma"
 USERNAME="zoro"
 PASSWORD="vasu"
-read -p "Enter the disk to install Arch Linux (e.g., /dev/sda): " Main_Disk
 
 # Checking if ethernet is connected
 echo "Checking the internet connection..."
@@ -58,17 +57,55 @@ while [ $internet_status -ne 0 ]; do
     esac
 done
 
+clear
+
 # Sync date and time
 timedatectl set-ntp true
 
+# Display the disk layout
+echo "==> Available partitions:"
+lsblk -p -o NAME,SIZE,FSTYPE,MOUNTPOINT
+
+# Partition the disk
+read -rp "Enter the disk to partition (e.g., /dev/sda): " Main_Disk
+read -rp "Enter the size of the boot partition (e.g., 1-2G): " BOOT_SIZE
+read -rp "Enter the size of the swap partition (e.g., 20G): " SWAP_SIZE
+read -rp "Enter the size of the root partition (e.g., 20G): " ROOT_SIZE
+
+# Check if bios is UEFI(32bit or 64bit) or BIOS
+UEFI_check() {
+    if cat /sys/firmware/efi/fw_platform_size >/dev/null; then
+        BOOT_MODE=UEFI
+    else
+        BOOT_MODE=BIOS
+    fi
+}
+
+UEFI_check
+UEFI=$?
 # Create partitions
 echo "==> Creating partitions..."
+if [ $BOOT_MODE == "UEFI" ]; then
     parted -s "$DISK" mklabel gpt
     parted -s "$DISK" mkpart ESP fat32 1MiB 1025MiB
     parted -s "$DISK" set 1 esp on
     parted -s "$DISK" mkpart primary linux-swap 1025MiB 17409MiB
     parted -s "$DISK" mkpart primary ext4 17409MiB 78849MiB
     parted -s "$DISK" mkpart primary ext4 78849MiB 100%
+else
+    parted -s "$DISK" mklabel msdos
+    parted -s "$DISK" mkpart primary ext4 1MiB 62464MiB
+    parted -s "$DISK" mkpart primary linux-swap 62464MiB 78848MiB
+    parted -s "$DISK" mkpart primary ext4 78848MiB 100%
+    parted -s "$DISK" set 1 boot on
+fi
+
+# Determine partition naming scheme
+if [ $Main_Disk == *"nvme"* ]; then
+    PART_SUFFIX="p"
+else
+    PART_SUFFIX=""
+fi
 
 # Format partitions
 echo "==> Formatting partitions..."
@@ -76,64 +113,35 @@ echo "==> Formatting partitions..."
 # Format partitions
 
 # Boot partition
-BOOT_PART="${Main_Disk}p1"
+BOOT_PART="${Main_Disk}${PART_SUFFIX}1"
 echo "Formatting boot partition ($BOOT_PART)..."
-mkfs.fat -F32 "$BOOT_PART"
-mount --mkdir /dev/$BOOT_PART /mnt/boot/efi
+if [ "$BOOT_MODE" == "UEFI" ]; then
+    mkfs.fat -F32 "$BOOT_PART"
+    mount --mkdir /dev/$BOOT_PART /mnt/boot/efi
+else
+    mkfs.ext4 "$BOOT_PART"
+    mount --mkdir /dev/$BOOT_PART /mnt/boot
+fi
 
 # Swap partition
-SWAP_PART="${Main_Disk}p2"
+SWAP_PART="${Main_Disk}${PART_SUFFIX}2"
 echo "Setting up swap partition ($SWAP_PART)..."
 mkswap $SWAP_PART
 swapon $SWAP_PART
 
 # Root partition
-ROOT_PART="${Main_Disk}p3"
+ROOT_PART="${Main_Disk}${PART_SUFFIX}3"
 echo "Formatting root partition ($ROOT_PART) as ext4..."
 mkfs.ext4 $ROOT_PART
+# Mount root partition
 mount /dev/$ROOT_PART /mnt
 
-# Home partition
-HOME_PART="${Main_Disk}p4"
+# Home partition (optional)
+HOME_PART="${Main_Disk}${PART_SUFFIX}4"
 echo "Formatting home partition ($HOME_PART) as ext4..."
 mkfs.ext4 $HOME_PART
+# Mount home partition
 mount --mkdir /dev/$HOME_PART /mnt/home
 
-reflector -latest 20 -p https --sort rate --save /etc/pacman.d/mirrorlist
-
 echo "==> Partitions formatted and mounted successfully!"
-pacstrap /mnt base base-devel linux linux-headers linux-lts linux-lts-headers linux-firmware efibootmgr \
-    grub os-prober amd-ucode reflector networkmanager plasma sddm konsole dolphin ark kwrite kcalc \
-    spectacle krunner partitionmanager packagekit-qt5
-
-# Generate fstab
-echo "==> Generating fstab..."
-genfstab -U /mnt >> /mnt/etc/fstab
-
-# Chroot into the new system
-echo "==> Chrooting into the new system..."
-arch-chroot /mnt /bin/bash <<EOF
-# Set the timezone
-ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
-hwclock --systohc
-
-# Set the locale
-echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
-locale-gen
-echo "LANG=en_US.UTF-8" > /etc/locale.conf
-
-# Set the hostname
-echo $HOSTNAME > /etc/hostname
-
-# Set hosts
-echo "$HOSTNAME" > /etc/hostname
-echo "127.0.0.1   localhost" >> /etc/hosts
-echo "::1         localhost" >> /etc/hosts
-echo "127.0.1.1   $HOSTNAME.localdomain $HOSTNAME" >> /etc/hosts
-
-# Set root password
-echo "root:$PASSWORD" | chpasswd
-
-# Enable services
-systemctl enable NetworkManager
-systemctl enable sddm
+pacstrap /mnt base base-devel linux linux-headers linux-lts linux-lts-headers linux-firmware neovim amd-ucode
