@@ -91,15 +91,13 @@ if [ $UEFI -eq 0 ]; then
     gdisk -n 4:0:0 -t 4:2300 -c 4:Home -l $Main_Disk
     gdisk -w $Main_Disk
     else
-    fdisk $Main_Disk <<EOF
-g
-n
-+${BOOT_SIZE}
-n
-+${SWAP_SIZE}
-n
-+${ROOT_SIZE}
-n
-w
-EOF
+    fdisk $Main_Disk
+    fdisk -Z $Main_Disk
+    fdisk -n 1:0:+$BOOT_SIZE -t 1:$Main_Disk
+    #WIP
 fi
+
+# Format partitions
+echo "==> Formatting partitions..."
+mkfs.fat -F32 $EFI
+mkswap $SWAP
