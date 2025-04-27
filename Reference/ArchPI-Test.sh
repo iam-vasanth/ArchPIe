@@ -46,6 +46,7 @@ echo "System update completed."
 PACMAN_PACKAGES=(
     lib32-nvidia-utils
     steam
+    ufw
     git
     plymouth
 )

@@ -1,3 +1,5 @@
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/iam-vasanth/Arch-postinstallation/main/Scripts/Test.sh)"
+
 Step-1 : Check for updates
 
 sudo pacman -Syu
