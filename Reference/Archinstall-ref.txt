@@ -104,3 +104,8 @@ pacman -S --needed grub efibootmgr networkmanager network-manager-applet dialog 
 
 
 sudo pacman -S --needed  dbus acpi fuse2 git zip unzip 7zip bash-completion dialog htop tree
+
+
+https://github.com/XxAcielxX/arch-plasma-install
+
+https://github.com/cipfge/arch-kde
