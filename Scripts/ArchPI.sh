@@ -79,18 +79,17 @@ echo "Installing virt-manager and dependencies..."
 sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
 
 # Configuring firewalld for virt-manager
-echo "Configuring firewalld for virt-manager..."
-sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
-sed "$a \\n# Allow forwarding for libvirt\n*nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 192.168.122.0/24 -o '$NetDevice' -j MASQUERADE\nCOMMIT" /home/zoro/Documents/Projects/Arch-postinstallation/before.rules
-sudo ufw enable
-sudo systemctl enable --now ufw
-echo "Virt-manager installation completed."
+# echo "Configuring firewalld for virt-manager..."
+# sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
+# sed "$a \\n# Allow forwarding for libvirt\n*nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 192.168.122.0/24 -o '$NetDevice' -j MASQUERADE\nCOMMIT" /home/zoro/Documents/Projects/Arch-postinstallation/before.rules
+# sudo ufw enable
+# sudo systemctl enable --now ufw
+# echo "Virt-manager installation completed."
 
 # Define flatpak packages
 FLATPAK_PACKAGES=(
     com.spotify.Client
     com.discordapp.Discord
-    org.gnome.Boxes
     org.videolan.VLC
     com.github.tchx84.Flatseal
     org.qbittorrent.qBittorrent
