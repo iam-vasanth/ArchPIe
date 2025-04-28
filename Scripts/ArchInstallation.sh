@@ -137,3 +137,17 @@ echo "root:$PASSWORD" | chpasswd
 # Enable services
 systemctl enable NetworkManager
 systemctl enable sddm
+
+# Install grub
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# Create a new user
+useradd -mG wheel $USERNAME
+echo "$USERNAME:$PASSWORD" | chpasswd
+sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+
+# Enable multilib repository
+sed -i 's/^#\[multilib\]/\[multilib\]/' /etc/pacman.conf
+sudo pacman -Syu
+

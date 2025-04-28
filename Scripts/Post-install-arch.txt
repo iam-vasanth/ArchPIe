@@ -1,4 +1,4 @@
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/iam-vasanth/Arch-postinstallation/main/Scripts/Test.sh)"
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/iam-vasanth/Arch-postinstallation/main/Scripts/ArchPI.sh)"
 
 Step-1 : Check for updates
 
@@ -78,6 +78,15 @@ Add this following line
 
 # Linux-LTS to Linux
 GRUB_TOP_LEVEL="/boot/vmlinuz-linux"
+
+# 
+
+firewall-cmd --zone=external --change-interface=$native device Name
+firewall-cmd --zone=external --change-interface=$libvirt virtual adaptor name
+
+sudo firewall-cmd --zone=public --add-masquerade --permanent
+sudo firewall-cmd --reload
+
 
 # How to make network connectinon in guest with UFW firewall on your host system
 

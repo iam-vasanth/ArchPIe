@@ -45,6 +45,7 @@ echo "System update completed."
 # Define pacman packages
 PACMAN_PACKAGES=(
     lib32-nvidia-utils
+    firewalld
     git
     openjdk-jdk
     firefox
@@ -77,8 +78,8 @@ VIRT_MANAGAER=(
 echo "Installing virt-manager and dependencies..."
 sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
 
-# Configuring UFW for virt-manager
-echo "configuring UFW for virt-manager..."
+# Configuring firewalld for virt-manager
+echo "Configuring firewalld for virt-manager..."
 sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
 sed "$a \\n# Allow forwarding for libvirt\n*nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 192.168.122.0/24 -o '$NetDevice' -j MASQUERADE\nCOMMIT" /home/zoro/Documents/Projects/Arch-postinstallation/before.rules
 sudo ufw enable
