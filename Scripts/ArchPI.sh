@@ -211,7 +211,22 @@ echo "Installed monoarch theme successfully."
 #   echo "UUID=$UUID $MOUNT_POINT ext4 defaults 0 2" >> /etc/fstab
 # fi
 
-# Connecting to 
+# # Connecting to hypervisor
+# connect qemu:///system &> /dev/null
+
+# virt-install \
+#   --name win11-vm \
+#   --memory 8192 \
+#   --vcpus 6 \
+#   --os-variant Win11 \
+#   --disk size=150,path=/mnt/BigPP/win11-vm.qcow2,format=qcow2,bus=virtio \
+#   --cdrom /path/to/windows11.iso \
+#   --disk /mnt/BigPP/ISO/virtio-win-0.1.229.iso,device=cdrom \
+#   --network network=default \
+#   --graphics spice \
+#   --video qxl \
+#   --boot uefi \
+
 
 echo "Completed all installations and configurations succesfully."
 echo "Rebooting system to apply all changes."

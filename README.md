@@ -1,7 +1,7 @@
 # Arch-postinstallation
 A post configuration and installation script for arch linux.
 
-The Post installation script works fine on a vannila arch.
+The Post installation script works fine on a vannila arch.  
 ⚠️ It should work on arch based distros too but please use it cautiously
 
 PROJECT IS STILL WORK IN PROGRESS BUT THE SCRIPT WORKS
