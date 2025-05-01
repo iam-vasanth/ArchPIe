@@ -13,8 +13,8 @@ fi
 
 # Refresh sudo credentials and keep them alive
 echo "Caching sudo credentials..."
-sudo -v
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+sudo -v &> /dev/null
+while true; do sudo -n true &> /dev/null ; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 # Store the actual username (not root)
 ACTUAL_USER=$(logname || echo $SUDO_USER)
@@ -32,135 +32,165 @@ chmod 440 "$TEMP_SUDOERS"
 # Revert back the sudoers rule after the script execution
 trap 'echo "Cleaning up..."; rm -f "$TEMP_SUDOERS"' EXIT INT TERM
 
-# Extracting the network device name for ufw configuration (Virt-manager)
+# Extracting the network device name for firewalld configuration (Virt-manager)
 NetDevice=$(ip route | awk '/default/ {print $5}')
+
+# Progress bar function
+progress_bar() {
+    local duration=2
+    local interval=0.1
+    local completed=0
+    local total=$((duration / interval))
+    local bar_width=50
+
+    while ((completed <= total)); do
+        local percent=$((completed * 100 / total))
+        local filled=$((completed * bar_width / total))
+        local empty=$((bar_width - filled))
+
+        printf "\r[%-${filled}s%${empty}s] %3d%%" "#" "" "$percent"
+
+        sleep $interval
+        completed=$((completed + 1))
+    done
+    echo ""  # New line at the end
+}
+
+pacman() {
+    # Defining the pacman packages to be installed
+    PACMAN_PACKAGES=(
+        lib32-nvidia-utils
+        firewalld
+        git
+        openjdk-jdk
+        firefox
+        neovim
+        plymouth
+        fuse
+        steam
+        wine winetricks
+        wine-mono
+        wine-gecko
+        partitionmanager
+    )
+    sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
+}
+
+virtmanager() {
+    # Define packages needed for virt-manager
+    VIRT_MANAGAER=(
+        qemu-full
+        virt-manager
+        virt-viewer
+        bridge-utils
+        dnsmasq
+        ebtables
+        iptables
+        libguestfs
+        swtpm
+    )
+    sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
+}
+
+flatpak() {
+    # Define flatpak packages
+    FLATPAK_PACKAGES=(
+        com.spotify.Client
+        com.discordapp.Discord
+        org.videolan.VLC
+        com.github.tchx84.Flatseal
+        org.qbittorrent.qBittorrent
+        com.usebottles.bottles
+        net.davidotek.pupgui2                   #ProtonUp-Qt
+        org.libreoffice.LibreOffice
+        com.stremio.Stremio
+    )
+    # Flatpak setup
+    sudo pacman -S --needed --noconfirm flatpak
+
+    #Configuring Flatpak as user
+    sudo -u $ACTUAL_USER flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+    # Install flatpak packages
+    sudo -u $ACTUAL_USER flatpak install -y flathub "${FLATPAK_PACKAGES[@]}"
+}
+
+aur() {
+    # Define AUR packages
+    AUR_PACKAGES=(
+        visual-studio-code-bin
+        plymouth-theme-monoarch
+    )
+
+    # Cheking if yay is installed. if not, install yay
+    if ! command -v yay &> /dev/null; then
+        echo "yay is not installed. Installing yay..."
+        # Create and switch to a temporary directory
+        TMP_DIR=$(mktemp -d) &> /dev/null
+        trap "rm -rf $TMP_DIR" EXIT  # Ensure cleanup on script exit
+        chown "$ACTUAL_USER:$ACTUAL_USER" "$TMP_DIR" &> /dev/null
+        sudo -u "$ACTUAL_USER" git clone https://aur.archlinux.org/yay.git "$TMP_DIR/yay"
+        # Build and install yay
+        cd "$TMP_DIR/yay" &> /dev/null
+        sudo -u "$ACTUAL_USER" makepkg -si --noconfirm &> /dev/null
+        echo "yay installation completed."
+    else
+        echo "yay is already installed."
+    fi
+    # Install AUR packages using yay
+    sudo -u $ACTUAL_USER bash -c "yay -S --needed --noconfirm ${AUR_PACKAGES[*]}" &> /dev/null
+}
 
 # Updating the system
 echo " Updating system.... "
-sudo pacman -Syu --noconfirm
+progress_bar 2
 echo "System update completed."
 
-# Pacman packages installation
-
-# Define pacman packages
-PACMAN_PACKAGES=(
-    lib32-nvidia-utils
-    firewalld
-    git
-    openjdk-jdk
-    firefox
-    neovim
-    plymouth
-    fuse
-    steam
-    wine winetricks
-    wine-mono
-    wine-gecko
-    partitionmanager
-)
-# Install basic tools with pacman
+# Install pacman packages
 echo "Installing basic tools with pacman..."
-sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
+pacman &> /dev/null
+progress_bar 2
 echo "Installing pacman packages completed."
 
-# Virt-manager installation and complete setup
-
-# Define packages for virt-manager
-VIRT_MANAGAER=(
-    qemu-full
-    virt-manager
-    virt-viewer
-    bridge-utils
-    libguestfs
-    swtpm
-)
-
+# Install virt-manager and configure firewalld
 echo "Installing virt-manager and dependencies..."
-sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
-
-# Configuring firewalld for virt-manager
-# echo "Configuring firewalld for virt-manager..."
-# sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
-# sed "$a \\n# Allow forwarding for libvirt\n*nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 192.168.122.0/24 -o '$NetDevice' -j MASQUERADE\nCOMMIT" /home/zoro/Documents/Projects/Arch-postinstallation/before.rules
-# sudo ufw enable
-# sudo systemctl enable --now ufw
-# echo "Virt-manager installation completed."
-
-# Define flatpak packages
-FLATPAK_PACKAGES=(
-    com.spotify.Client
-    com.discordapp.Discord
-    org.videolan.VLC
-    com.github.tchx84.Flatseal
-    org.qbittorrent.qBittorrent
-    com.usebottles.bottles
-    net.davidotek.pupgui2                   #ProtonUp-Qt
-    org.libreoffice.LibreOffice
-    com.stremio.Stremio
-)
-
-# Flatpak setup
-echo "Setting up flatpak..."
-sudo pacman -S --needed --noconfirm flatpak
-
-# Switch to user context for flatpak configuration
-echo "Configuring Flatpak as user $ACTUAL_USER..."
-sudo -u $ACTUAL_USER flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+virtmanager &> /dev/null
+progress_bar 2
+echo "Installing virt-manager packages completed."
 
 # Install flatpak packages
-echo "Installing applications via Flatpak..."
-sudo -u $ACTUAL_USER flatpak install -y flathub "${FLATPAK_PACKAGES[@]}"
+echo "Installing flatpak and packages..."
+flatpak &> /dev/null
+progress_bar 2
+echo "Installing flatpak packages completed."
 
-# Define AUR packages
-AUR_PACKAGES=(
-    visual-studio-code-bin
-    plymouth-theme-monoarch
-)
-
-if ! command -v yay &> /dev/null; then
-    echo "Installing yay AUR helper..."
-    
-    # Create and switch to a temporary directory
-    TMP_DIR=$(mktemp -d)
-    trap "rm -rf $TMP_DIR" EXIT  # Ensure cleanup on script exit
-    chown "$ACTUAL_USER:$ACTUAL_USER" "$TMP_DIR"
-    sudo -u "$ACTUAL_USER" git clone https://aur.archlinux.org/yay.git "$TMP_DIR/yay"
-    
-    # Build and install yay
-    cd "$TMP_DIR/yay"
-    sudo -u "$ACTUAL_USER" makepkg -si --noconfirm
-    
-    echo "yay installation completed."
-else
-    echo "yay is already installed."
-fi
-
-echo "Installing AUR packages using yay..."
-sudo -u $ACTUAL_USER bash -c "yay -S --needed --noconfirm ${AUR_PACKAGES[*]}"
+# Install AUR packages
+echo "Installing AUR packages..."
+aur
+progress_bar 2
+echo "Installing AUR packages completed."
 
 # Setting up plymouth with monoarch theme
 echo "Configuring plymouth..."
 sed -i "/^HOOKS/s/\budev\b/& plymouth/" /etc/mkinitcpio.conf
+echo "Regenerating initramfs..."
 sudo mkinitcpio -p linux
+progress_bar 2
 
 # Adds plumouth to grub
 sed -i "/^GRUB_CMDLINE_LINUX_DEFAULT=/s/\bquiet\b/& splash rd.udev.log_priority=3 vt.global_cursor_default=0/" /etc/default/grub
 
-# Ensures system boots into linux kernel instead of linux-lts bby default
+# Ensures system boots into linux kernel instead of linux-lts by default
 sed -i '/^GRUB_CMDLINE_LINUX=/a \\n# Linux-LTS to Linux\nGRUB_TOP_LEVEL="/boot/vmlinuz-linux"' /etc/default/grub
 
 # Build grub configuration
-sudo grub-mkconfig -o /boot/grub/grub.cfg
-
-if [ -d "/usr/share/plymouth/themes/monoarch" ]; then
-    echo "Monoarch theme already exists."
-else
-    echo "Installing monoarch theme..."
-    yay -S --noconfirm plymouth-theme-monoarch
-fi
+echo "Building grub configuration..."
+sudo grub-mkconfig -o /boot/grub/grub.cfg &> /dev/null
 
 # Apply the monoarch theme
-sudo plymouth-set-default-theme -R monoarch
+echo "Applying monoarch theme..."
+sudo plymouth-set-default-theme -R monoarch &> /dev/null
+progress_bar 2
 echo "Installed monoarch theme successfully."
 
 echo "Completed all installations and configurations succesfully."
