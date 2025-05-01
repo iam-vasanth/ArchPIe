@@ -24,7 +24,7 @@ fi
 HOME_DIR="/home/$ACTUAL_USER"
 
 # Create temporary sudoers rule for yay package installation (Optional). 
-# This code block is removable but it will defeat the purpose of entering the sudo password one time and a automatic installation script.
+# This code block is removable but it will defeat the purpose of entering the sudo password one time and that it's a automatic installation script.
 TEMP_SUDOERS="/etc/sudoers.d/temp-nopasswd-$ACTUAL_USER"
 echo "$ACTUAL_USER ALL=(ALL) NOPASSWD: ALL" > "$TEMP_SUDOERS"
 chmod 440 "$TEMP_SUDOERS"
@@ -174,7 +174,7 @@ echo "Installing AUR packages completed."
 echo "Configuring plymouth..."
 sed -i "/^HOOKS/s/\budev\b/& plymouth/" /etc/mkinitcpio.conf
 echo "Regenerating initramfs..."
-sudo mkinitcpio -p linux
+sudo mkinitcpio -p linux &> /dev/null
 progress_bar 2
 
 # Adds plumouth to grub
@@ -192,6 +192,26 @@ echo "Applying monoarch theme..."
 sudo plymouth-set-default-theme -R monoarch &> /dev/null
 progress_bar 2
 echo "Installed monoarch theme successfully."
+
+# WIP
+# # Mount the 2nd drive
+# read -p "Do you want to mount the 2nd drive(If you have). Then enter device name (e.g. /dev/nvme1n1) or press Enter to skip:" 2nddrive
+# if [ -z "$2nddrive" ]; then
+#     echo "No device name entered. Skipping drive mounting."
+# else
+#     echo "You entered: $2nddrive"
+# fi
+# echo "Mounting the 2nd drive..."
+# sudo mkdir -p /mnt/BigPP &> /dev/null
+# UUID=$(blkid /dev/nvme1n1 | grep -oP 'UUID="\K[^"]+')
+# if grep -q "$UUID" /etc/fstab; then
+#   echo "UUID already exists in /etc/fstab. Skipping entry."
+# else
+#   echo "Adding entry to /etc/fstab"
+#   echo "UUID=$UUID $MOUNT_POINT ext4 defaults 0 2" >> /etc/fstab
+# fi
+
+# Connecting to 
 
 echo "Completed all installations and configurations succesfully."
 echo "Rebooting system to apply all changes."

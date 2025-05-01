@@ -1,5 +1,8 @@
 sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/iam-vasanth/Arch-postinstallation/main/Scripts/ArchPI.sh)"
 
+Ideas :
+Creating VM and automating it.
+
 Step-1 : Check for updates
 
 sudo pacman -Syu
