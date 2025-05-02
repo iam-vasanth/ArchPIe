@@ -145,21 +145,3 @@ mount --mkdir /dev/$HOME_PART /mnt/home
 
 echo "==> Partitions formatted and mounted successfully!"
 pacstrap /mnt base base-devel linux linux-headers linux-lts linux-lts-headers linux-firmware neovim amd-ucode
-
-
-sudo systemctl enable firewalld
-sudo systemctl start firewalld
-sudo systemctl net.ipv4.ip_forward=1
-sudo systemctl net.ipv6.conf.all.forwarding=1
-ip link
-ip route get 8.8.8.8
-sudo firewall-cmd --zone=external --change-interface=wlan0 --permanent
-sudo firewall-cmd --zone=internal --change-interface=virbr0 --permanent
-sudo firewall-cmd --reload
-sudo firewall-cmd --permanent --new-policy int2ext
-sudo firewall-cmd --permanent --policy  int2ext --add-ingress-zone internal
-sudo firewall-cmd --permanent --policy  int2ext --add-egress-zone external
-sudo firewall-cmd --permanent --policy int2ext --set-target ACCEPT
-sudo firewall-cmd --reload
-sudo systemctl restart firewalld
-sudo systemctl restart libvirtd

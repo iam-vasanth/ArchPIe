@@ -35,6 +35,10 @@ trap 'echo "Cleaning up..."; rm -f "$TEMP_SUDOERS"' EXIT INT TERM
 # Extracting the network device name for firewalld configuration (Virt-manager)
 NetDevice=$(ip route | awk '/default/ {print $5}')
 
+# WIP
+# Extrating the KVM virtual network device name for virt-manager
+# KVM_NetDevice=$
+
 # Progress bar function
 progress_bar() {
     local duration=2
@@ -90,6 +94,21 @@ virtmanager() {
         swtpm
     )
     sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
+    # WIP
+    # # Configure firewalld for virt-manager
+    # sudo systemctl enable --now firewalld &> /dev/null
+    # # Have to add a SED - sudo systemctl net.ipv4.ip_forward=1
+    # # Have to add a SED - sudo systemctl net.ipv6.conf.all.forwarding=1
+    # sudo firewall-cmd --zone=external --change-interface=$NetDevice --permanent
+    # sudo firewall-cmd --zone=internal --change-interface=virbr0 --permanent
+    # sudo firewall-cmd --reload
+    # sudo firewall-cmd --permanent --new-policy int2ext
+    # sudo firewall-cmd --permanent --policy  int2ext --add-ingress-zone internal
+    # sudo firewall-cmd --permanent --policy  int2ext --add-egress-zone external
+    # sudo firewall-cmd --permanent --policy int2ext --set-target ACCEPT
+    # sudo firewall-cmd --reload
+    # sudo systemctl restart firewalld
+    # sudo systemctl restart libvirtd
 }
 
 flatpak() {
