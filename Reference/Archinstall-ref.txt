@@ -1,0 +1,111 @@
+1. Setting everything up
+
+setfont ter-120b														# sets the font to readable size
+
+Connect to internet:													# ethernet will directly get recognized. The below steps are for wifi.
+iwctl
+device list
+station [selected station] get-networks
+station [selected station] connect [network-name]						# if the networks has space in-between or a special character. Keep it inside a single or double quotes and try executing above command
+ping -c 5 archlinux.org													# to check the network connectivity
+
+	Optional:
+	1. Do these on target PC
+	passwd																# sets a temp password for arch live boot
+	vim /etc/ssh/sshd_config											# confirm that "PermitRootLogin yes" is set
+	systemctl start sshd
+	systemctl enable sshd
+	ip a																# note down the ip address of the device
+
+	2.Do these on local machine
+	ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@ip.address.of.target	# replace "ip.address.of.target" with the ip address of target machine
+
+cat /sys/firmware/efi/fw_platform_size
+
+Output:
+64 - 64bit UEFI
+32 - 32bit UEFI
+No such file or directory - either it's BIOS or CSM
+
+timedatectl set-ntp true
+
+2. Partitioning the disks
+
+lsblk
+fdisk /dev/[disk name]													# if you're on a BIOS system - MBR partiotion table (Recommended for older system which does not have UEFI)
+gdisk /dev/[disk name]                                                  # if you're on a EFI system - GPT partition table (Recommended if your PC is UEFI based and you are dual booting)
+cfdisk /dev/[disk name]													
+x																		# Expert command
+z																		# "Zap" the disk
+y																		# Blank our MBR
+
+gdisk /dev/[disk name]
+n												# new partition
+nth Partition: <press Enter>
+nth sector: <press Enter>
++1G												# boot partition size
+EF00											# indicates this is a EFI system partition
+
+	Optional:										# Swap partition
+	n
+	nth Partition: <press Enter>
+	nth sector: <press Enter>
+	+16G											# swap partition size
+	8200											# indicates this is a swap partition
+
+
+n												# new partition
+nth Partition: <press Enter>
+nth sector: <press Enter>
++50G											# root partition size
+8300											# indicates this is a linux file system
+
+n												# new partition
+1st Partition: <press Enter>
+First sector: <press Enter>
+Last sector: <press Enter>						# use all the remaining space
+8300											# indicates this is a linux file system
+
+w												# write and exit
+
+# making file system and formating the partitions
+mkfs.fat -F32 /dev/[EFI partition disk name]
+mkfs.ext4 /dev/[Root partition disk name]
+mkfs.ext4 /dev/[Home partition disk name]
+
+# mounting the file system
+mount /dev/[partition] /mnt
+mount --mkdir /dev/[partition] /mnt/boot
+mount --mkdir /dev/[partition] /mnt/home
+
+3. Installing the system and setting up
+
+
+
+pacstrap /mnt base base-devel linux linux-headers linux-lts linux-lts-headers linux-firmware neovim amd-ucode
+# mtools and dosfstools are needed if dual booting with windows
+
+genfstab -U /mnt >> /mnt/etc/fstab				# generate a fstab file
+cat /mnt/etc/fstab								# check if the file if wanted
+
+arch-chroot /mnt								# chroot into the system
+
+ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime		# set the timezone
+hwclock --systohc											# sync hardware clock with system time
+
+# set language
+nvim /etc/locale.gen										# uncomment the language you want. if english the primary language. uncomment this like "en_US.UTF-8 UTF-8" 
+locale-gen													# generate locale
+echo 'LANG=en_US.UTF-8' >> /etc/locale.conf					# add language to locale.conf
+
+
+Packages: 
+pacman -S --needed grub efibootmgr networkmanager network-manager-applet dialog wpa_supplicant reflector base-devel linux-headers bluez bluez-utils cups alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack bash-completion openssh rsync acpi acpi_call tlp sof-firmware acpid os-prober nvidia nvidia-utils nvidia-settings gstreamer 
+
+
+sudo pacman -S --needed  dbus acpi fuse2 git zip unzip 7zip bash-completion dialog htop tree
+
+
+https://github.com/XxAcielxX/arch-plasma-install
+
+https://github.com/cipfge/arch-kde

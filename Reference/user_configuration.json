@@ -1,0 +1,205 @@
+{
+    "archinstall-language": "English",
+    "audio_config": {
+        "audio": "pipewire"
+    },
+    "bootloader": "Grub",
+    "custom_commands": [],
+    "disk_config": {
+        "config_type": "manual_partitioning",
+        "device_modifications": [
+            {
+                "device": "/dev/nvme1n1",
+                "partitions": [
+                    {
+                        "btrfs": [],
+                        "dev_path": "/dev/nvme1n1p1",
+                        "flags": [
+                            "boot",
+                            "esp"
+                        ],
+                        "fs_type": "fat32",
+                        "mount_options": [],
+                        "mountpoint": "/boot",
+                        "obj_id": "74d70e9c-8cb3-453f-8671-2ae3b944db95",
+                        "size": {
+                            "sector_size": {
+                                "unit": "B",
+                                "value": 512
+                            },
+                            "unit": "B",
+                            "value": 1073741824
+                        },
+                        "start": {
+                            "sector_size": {
+                                "unit": "B",
+                                "value": 512
+                            },
+                            "unit": "sectors",
+                            "value": 2048
+                        },
+                        "status": "existing",
+                        "type": "primary"
+                    },
+                    {
+                        "btrfs": [],
+                        "dev_path": "/dev/nvme1n1p2",
+                        "flags": [
+                            "swap"
+                        ],
+                        "fs_type": "linux-swap",
+                        "mount_options": [],
+                        "mountpoint": null,
+                        "obj_id": "1d3afb43-9e46-4668-aac0-5ee41a82510a",
+                        "size": {
+                            "sector_size": {
+                                "unit": "B",
+                                "value": 512
+                            },
+                            "unit": "B",
+                            "value": 17179869184
+                        },
+                        "start": {
+                            "sector_size": {
+                                "unit": "B",
+                                "value": 512
+                            },
+                            "unit": "sectors",
+                            "value": 2099200
+                        },
+                        "status": "existing",
+                        "type": "primary"
+                    },
+                    {
+                        "btrfs": [],
+                        "dev_path": "/dev/nvme1n1p3",
+                        "flags": [],
+                        "fs_type": "ext4",
+                        "mount_options": [],
+                        "mountpoint": "/",
+                        "obj_id": "75ececb8-fcb4-4b2c-8980-fda7e2ae249a",
+                        "size": {
+                            "sector_size": {
+                                "unit": "B",
+                                "value": 512
+                            },
+                            "unit": "B",
+                            "value": 64424509440
+                        },
+                        "start": {
+                            "sector_size": {
+                                "unit": "B",
+                                "value": 512
+                            },
+                            "unit": "sectors",
+                            "value": 35653632
+                        },
+                        "status": "existing",
+                        "type": "primary"
+                    },
+                    {
+                        "btrfs": [],
+                        "dev_path": "/dev/nvme1n1p4",
+                        "flags": [
+                            "linux-home"
+                        ],
+                        "fs_type": "ext4",
+                        "mount_options": [],
+                        "mountpoint": "/home",
+                        "obj_id": "f9bf9672-74bf-4702-a495-7327c3470f84",
+                        "size": {
+                            "sector_size": {
+                                "unit": "B",
+                                "value": 512
+                            },
+                            "unit": "B",
+                            "value": 429430669312
+                        },
+                        "start": {
+                            "sector_size": {
+                                "unit": "B",
+                                "value": 512
+                            },
+                            "unit": "sectors",
+                            "value": 161482752
+                        },
+                        "status": "existing",
+                        "type": "primary"
+                    }
+                ],
+                "wipe": false
+            }
+        ]
+    },
+    "hostname": "Enma",
+    "kernels": [
+        "linux",
+        "linux-lts"
+    ],
+    "locale_config": {
+        "kb_layout": "us",
+        "sys_enc": "UTF-8",
+        "sys_lang": "en_US"
+    },
+    "mirror_config": {
+        "custom_repositories": [],
+        "custom_servers": [],
+        "mirror_regions": {
+            "India": [
+                "http://in.mirrors.cicku.me/archlinux/$repo/os/$arch",
+                "https://in.mirrors.cicku.me/archlinux/$repo/os/$arch",
+                "https://mirror.albony.in/archlinux/$repo/os/$arch",
+                "https://mirror.del2.albony.in/archlinux/$repo/os/$arch",
+                "https://mirror.maa.albony.in/archlinux/$repo/os/$arch",
+                "http://in-mirror.garudalinux.org/archlinux/$repo/os/$arch",
+                "https://in-mirror.garudalinux.org/archlinux/$repo/os/$arch",
+                "http://mirror.sahil.world/archlinux/$repo/os/$arch",
+                "https://mirror.sahil.world/archlinux/$repo/os/$arch",
+                "http://mirrors.nxtgen.com/archlinux-mirror/$repo/os/$arch",
+                "https://mirrors.nxtgen.com/archlinux-mirror/$repo/os/$arch",
+                "https://mirrors.abhy.me/archlinux/$repo/os/$arch",
+                "http://in.arch.niranjan.co/$repo/os/$arch",
+                "https://in.arch.niranjan.co/$repo/os/$arch",
+                "http://mirrors.saswata.cc/archlinux/$repo/os/$arch",
+                "https://mirrors.saswata.cc/archlinux/$repo/os/$arch",
+                "https://archlinux.kushwanthreddy.com/$repo/os/$arch"
+            ],
+            "Worldwide": [
+                "http://mirror.rackspace.com/archlinux/$repo/os/$arch",
+                "https://mirror.rackspace.com/archlinux/$repo/os/$arch",
+                "https://ftpmirror.infania.net/mirror/archlinux/$repo/os/$arch",
+                "https://geo.mirror.pkgbuild.com/$repo/os/$arch"
+            ]
+        },
+        "optional_repositories": [
+            "multilib"
+        ]
+    },
+    "network_config": {
+        "type": "nm"
+    },
+    "ntp": true,
+    "packages": [
+        "7zip",
+        "firefox",
+        "swtpm"
+    ],
+    "parallel_downloads": 0,
+    "profile_config": {
+        "gfx_driver": "Nvidia (proprietary)",
+        "greeter": "sddm",
+        "profile": {
+            "custom_settings": {
+                "KDE Plasma": {}
+            },
+            "details": [
+                "KDE Plasma"
+            ],
+            "main": "Desktop"
+        }
+    },
+    "services": [],
+    "swap": false,
+    "timezone": "Asia/Kolkata",
+    "version": null
+}

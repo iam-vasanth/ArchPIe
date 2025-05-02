@@ -1,0 +1,115 @@
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/iam-vasanth/Arch-postinstallation/main/Scripts/ArchPI.sh)"
+
+Ideas :
+Creating VM and automating it.
+
+Step-1 : Check for updates
+
+sudo pacman -Syu
+
+==========================================================================================================================
+
+Step-2 : Installing timeshift and creating a backup with home directory.
+
+sudo pacman -S timeshift
+
+==========================================================================================================================
+
+Step-3 : Installing AUR helper.
+
+yay :
+sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
+
+paru :
+sudo pacman -S --needed base-devel && git clone https://aur.archlinux.org/paru.git && cd paru && makepkg -si
+
+==========================================================================================================================
+
+Step-4 : Installing necessary packages
+
+sudo pacman -S --needed firefox neovim plymouth fuse steam wine winetricks wine-mono wine-gecko flatpak partitionmanager discord spotify-launcher
+
+**Virt-manager setup**
+
+sudo pacman -S qemu-full libvirt-daemon virt-manager virt-viewer bridge-utils libguestfs swtpm
+sudo systemctl enable --now libvirtd
+sudo usermod -aG libvirt zoro
+
+===========================================================================================================================
+
+Step-5 : Playmouth with monoarch theme
+
+1. ADD A HOOK
+
+sudo nvim /etc/mkinitcpio.conf
+
+HOOKS = (....plymouth....)
+**ADD IT AFTER "udev" **
+
+2. BUILD THE mkinitcpio.conf
+
+sudo mkinitcpio -p linux
+**REPLACE LINUX WITH THE KERNAL YOU HAVE**
+
+3. CONFIGURE AND UPDATE GRUB
+
+sudo nvim /etc/default/grub
+
+In "GRUB_CMDLINE_LINUX_DEFAULT" parameters add "splash rd.udev.log_priority=3 vt.global_cursor_default=0". Should look something like this..
+
+GRUB_CMDLINE_LINUX_DEFAULT="...... splash rd.udev.log_priority=3 vt.global_cursor_default=0"
+
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+4. INSTALL MONOARRCH THEME AND APPLY IT.
+
+yay -S plymouth-theme-monoarch
+
+sudo plymouth-set-default-theme -R monoarch
+
+Reboot the PC.
+
+=============================================================================================================================
+
+Optional :
+
+If you have linux and linux-lts kernals installed and grub defaults to linux-lts. You can change it to linux by doing this
+
+sudo nvim /etc/default/grub
+
+Add this following line
+
+# Linux-LTS to Linux
+GRUB_TOP_LEVEL="/boot/vmlinuz-linux"
+
+# 
+
+firewall-cmd --zone=external --change-interface=$native device Name
+firewall-cmd --zone=external --change-interface=$libvirt virtual adaptor name
+
+sudo firewall-cmd --zone=public --add-masquerade --permanent
+sudo firewall-cmd --reload
+
+
+# How to make network connectinon in guest with UFW firewall on your host system
+
+sudo nvim /etc/default/ufw
+
+Change DROP to ACCEPT
+
+DEFAULT_FORWARD_POLICY="ACCEPT"
+
+sudo nvim /etc/ufw/before.rules
+
+Add this below block at the end.
+
+# Allow forwarding for libvirtd
+*nat
+:POSTROUTING ACCEPT [0:0]
+-A POSTROUTING -s 192.168.122.0/24 -o wlan0 -j MASQUERADE
+commit
+
+Add this below block after "*filter" before "commit"
+
+-A ufw-before-forward -i virbr0 -j ACCEPT
+-A ufw-before-forward -o virbr0 -j ACCEPT
