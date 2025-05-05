@@ -143,7 +143,7 @@ aur() {
 
 # Updating the system
 echo " Updating system.... "
-sudo pacman -Syu --noconfirm &> /dev/null
+sudo pacman -Syu --noconfirm
 echo "System update completed."
 
 # Install pacman packages
