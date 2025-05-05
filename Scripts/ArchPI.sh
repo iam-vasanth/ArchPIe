@@ -39,38 +39,6 @@ NetDevice=$(ip route | awk '/default/ {print $5}')
 # Extrating the KVM virtual network device name for virt-manager
 # KVM_NetDevice=$
 
-# Progress bar function
-# Simple progress bar (Integer-based)
-progress_bar() {
-    local duration=$1  # Duration in seconds
-    local bar_width=50  # Width of the progress bar
-    local completed=0  # Start with 0% completion
-
-    # Ensure duration is greater than 0
-    if [ "$duration" -le 0 ]; then
-        echo "Error: Duration must be a positive number."
-        return 1
-    fi
-
-    # Total number of steps for the progress bar (based on the duration)
-    local total=$((duration))
-
-    # Loop to fill the progress bar
-    while ((completed <= total)); do
-        local percent=$((completed * 100 / total))
-        local filled=$((completed * bar_width / total))
-
-        # Print the progress bar
-        printf "\r[%-${bar_width}s] %3d%%" "$(printf '#%.0s' $(seq 1 $filled))" "$percent"
-        
-        # Simulate work by sleeping for 1 second per iteration
-        sleep 1
-        completed=$((completed + 1))
-    done
-
-    echo ""  # New line at the end
-}
-
 pacman() {
     # Defining the pacman packages to be installed
     PACMAN_PACKAGES=(
@@ -175,31 +143,27 @@ aur() {
 
 # Updating the system
 echo " Updating system.... "
-progress_bar 5
+sudo pacman -Syu --noconfirm &> /dev/null
 echo "System update completed."
 
 # Install pacman packages
 echo "Installing basic tools with pacman..."
 pacman &> /dev/null
-progress_bar 5
 echo "Installing pacman packages completed."
 
 # Install virt-manager and configure firewalld
 echo "Installing virt-manager and dependencies..."
 virtmanager &> /dev/null
-progress_bar 5
 echo "Installing virt-manager packages completed."
 
 # Install flatpak packages
 echo "Installing flatpak and packages..."
 flatpak &> /dev/null
-progress_bar 5
 echo "Installing flatpak packages completed."
 
 # Install AUR packages
 echo "Installing AUR packages..."
 aur
-progress_bar 5
 echo "Installing AUR packages completed."
 
 # Setting up plymouth with monoarch theme
@@ -207,7 +171,6 @@ echo "Configuring plymouth..."
 sed -i "/^HOOKS/s/\budev\b/& plymouth/" /etc/mkinitcpio.conf
 echo "Regenerating initramfs..."
 sudo mkinitcpio -p linux &> /dev/null
-progress_bar 5
 
 # Adds plumouth to grub
 sed -i "/^GRUB_CMDLINE_LINUX_DEFAULT=/s/\bquiet\b/& splash rd.udev.log_priority=3 vt.global_cursor_default=0/" /etc/default/grub
@@ -222,7 +185,6 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg &> /dev/null
 # Apply the monoarch theme
 echo "Applying monoarch theme..."
 sudo plymouth-set-default-theme -R monoarch &> /dev/null
-progress_bar 5
 echo "Installed monoarch theme successfully."
 
 # WIP
