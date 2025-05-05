@@ -35,6 +35,11 @@ trap 'echo "Cleaning up..."; rm -f "$TEMP_SUDOERS"' EXIT INT TERM
 # Extracting the network device name for firewalld configuration (Virt-manager)
 NetDevice=$(ip route | awk '/default/ {print $5}')
 
+# Mounting second drive
+lsblk -o UUID,TYPE,SIZE,MOUNTPOINT
+read -p "Enter the UUID of the second drive: " UUID
+read -p "Enter the mount point (e.g., /mnt/Folder_name): " MOUNT_POINT
+
 # WIP
 # Extrating the KVM virtual network device name for virt-manager
 # KVM_NetDevice=$
@@ -45,7 +50,7 @@ pacman() {
         lib32-nvidia-utils
         firewalld
         git
-        openjdk-jdk
+        jdk-openjdk
         firefox
         discord
         neovim
@@ -58,7 +63,7 @@ pacman() {
         wine-gecko
         partitionmanager
     )
-    sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
+    sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}" &> /dev/null
 }
 
 virtmanager() {
@@ -74,7 +79,7 @@ virtmanager() {
         libguestfs
         swtpm
     )
-    sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
+    sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}" &> /dev/null
     # WIP
     # Configure firewalld for virt-manager
     # sudo systemctl enable --now firewalld &> /dev/null
@@ -106,13 +111,13 @@ flatpak() {
         com.stremio.Stremio
     )
     # Flatpak setup
-    sudo pacman -S --needed --noconfirm flatpak
+    sudo pacman -S --needed --noconfirm flatpak &> /dev/null
 
     #Configuring Flatpak as user
-    sudo -u $ACTUAL_USER flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    sudo -u $ACTUAL_USER flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo &> /dev/null
 
     # Install flatpak packages
-    sudo -u $ACTUAL_USER flatpak install -y flathub "${FLATPAK_PACKAGES[@]}"
+    sudo -u $ACTUAL_USER flatpak install -y flathub "${FLATPAK_PACKAGES[@]}" &> /dev/null
 }
 
 aur() {
@@ -148,17 +153,17 @@ echo "System update completed."
 
 # Install pacman packages
 echo "Installing basic tools with pacman..."
-pacman &> /dev/null
+pacman
 echo "Installing pacman packages completed."
 
 # Install virt-manager and configure firewalld
 echo "Installing virt-manager and dependencies..."
-virtmanager &> /dev/null
+virtmanager
 echo "Installing virt-manager packages completed."
 
 # Install flatpak packages
 echo "Installing flatpak and packages..."
-flatpak &> /dev/null
+flatpak
 echo "Installing flatpak packages completed."
 
 # Install AUR packages
@@ -187,23 +192,16 @@ echo "Applying monoarch theme..."
 sudo plymouth-set-default-theme -R monoarch &> /dev/null
 echo "Installed monoarch theme successfully."
 
-# WIP
-# # Mount the 2nd drive
-# read -p "Do you want to mount the 2nd drive(If you have). Then enter device name (e.g. /dev/nvme1n1) or press Enter to skip:" 2nddrive
-# if [ -z "$2nddrive" ]; then
-#     echo "No device name entered. Skipping drive mounting."
-# else
-#     echo "You entered: $2nddrive"
-# fi
-# echo "Mounting the 2nd drive..."
-# sudo mkdir -p /mnt/BigPP &> /dev/null
-# UUID=$(blkid /dev/nvme1n1 | grep -oP 'UUID="\K[^"]+')
-# if grep -q "$UUID" /etc/fstab; then
-#   echo "UUID already exists in /etc/fstab. Skipping entry."
-# else
-#   echo "Adding entry to /etc/fstab"
-#   echo "UUID=$UUID $MOUNT_POINT ext4 defaults 0 2" >> /etc/fstab
-# fi
+sudo mkdir -p $MOUNT_POINT &> /dev/null
+if grep -q "UUID=$UUID" /etc/fstab; then
+    echo "The UUID $UUID already exists in /etc/fstab. Skipping entry."
+else
+    echo "Adding entry to /etc/fstab..."
+    echo "UUID=$UUID $MOUNT_POINT ext4 defaults 0 2" >> /etc/fstab
+    echo "Entry added successfully."
+    sudo mount -a &> /dev/null
+    echo "Mounted $MOUNT_POINT successfully."
+fi
 
 # # Connecting to hypervisor
 # connect qemu:///system &> /dev/null
@@ -220,7 +218,11 @@ echo "Installed monoarch theme successfully."
 #   --graphics spice \
 #   --video qxl \
 #   --boot uefi \
+#   --tpm backend.type=emulator,model=tpm-crb
 
+# virt-instll \
+#     --name arch-vm \
+#     --memory 4096 \
 
 echo "Completed all installations and configurations succesfully."
 echo "Rebooting system to apply all changes."
