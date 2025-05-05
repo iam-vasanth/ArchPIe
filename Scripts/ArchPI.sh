@@ -42,9 +42,9 @@ NetDevice=$(ip route | awk '/default/ {print $5}')
 # Progress bar function
 progress_bar() {
     local duration=$1  # Duration in seconds
-    local interval=0.1 # Update interval in seconds (as a float)
+    local interval=1   # Update interval in seconds (as an integer)
     local completed=0
-    local total=$(echo "$duration / $interval" | bc)  # Use bc to calculate total as an integer
+    local total=$((duration / interval))  # Total steps in the progress bar
     local bar_width=50
 
     while ((completed <= total)); do
@@ -52,6 +52,7 @@ progress_bar() {
         local filled=$((completed * bar_width / total))
         local empty=$((bar_width - filled))
 
+        # Printing the progress bar
         printf "\r[%-${bar_width}s] %3d%%" "$(printf '#%.0s' $(seq 1 $filled))" "$percent"
         sleep $interval
         completed=$((completed + 1))
