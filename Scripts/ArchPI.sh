@@ -95,7 +95,7 @@ virtmanager() {
     )
     sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
     # WIP
-    # # Configure firewalld for virt-manager
+    # Configure firewalld for virt-manager
     # sudo systemctl enable --now firewalld &> /dev/null
     # # Have to add a SED - sudo systemctl net.ipv4.ip_forward=1
     # # Have to add a SED - sudo systemctl net.ipv6.conf.all.forwarding=1
