@@ -40,23 +40,34 @@ NetDevice=$(ip route | awk '/default/ {print $5}')
 # KVM_NetDevice=$
 
 # Progress bar function
+# Simple progress bar (Integer-based)
 progress_bar() {
     local duration=$1  # Duration in seconds
-    local interval=1   # Update interval in seconds (as an integer)
-    local completed=0
-    local total=$((duration / interval))  # Total steps in the progress bar
-    local bar_width=50
+    local bar_width=50  # Width of the progress bar
+    local completed=0  # Start with 0% completion
 
+    # Ensure duration is greater than 0
+    if [ "$duration" -le 0 ]; then
+        echo "Error: Duration must be a positive number."
+        return 1
+    fi
+
+    # Total number of steps for the progress bar (based on the duration)
+    local total=$((duration))
+
+    # Loop to fill the progress bar
     while ((completed <= total)); do
         local percent=$((completed * 100 / total))
         local filled=$((completed * bar_width / total))
-        local empty=$((bar_width - filled))
 
-        # Printing the progress bar
+        # Print the progress bar
         printf "\r[%-${bar_width}s] %3d%%" "$(printf '#%.0s' $(seq 1 $filled))" "$percent"
-        sleep $interval
+        
+        # Simulate work by sleeping for 1 second per iteration
+        sleep 1
         completed=$((completed + 1))
     done
+
     echo ""  # New line at the end
 }
 
