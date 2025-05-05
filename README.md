@@ -7,5 +7,5 @@ The Post installation script works fine on a vannila arch.
 PROJECT IS STILL WORK IN PROGRESS BUT THE POST-INSTALLATION SCRIPT WORKS
 
 ```ps1
-sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/iam-vasanth/Arch-postinstallation/main/Scripts/Test.sh)"
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/iam-vasanth/Arch-postinstallation/main/Scripts/ArchPI.sh)"
 ```
