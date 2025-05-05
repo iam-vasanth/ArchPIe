@@ -68,11 +68,13 @@ pacman() {
         git
         openjdk-jdk
         firefox
+        discord
         neovim
         plymouth
         fuse
         steam
-        wine winetricks
+        wine
+        winetricks
         wine-mono
         wine-gecko
         partitionmanager
