@@ -41,28 +41,10 @@ NetDevice=$(ip route | awk '/default/ {print $5}')
 
 # Progress bar function
 progress_bar() {
-    # local duration=2
-    # local interval=0.1
-    # local completed=0
-    # local total=$((duration / interval))
-    # local bar_width=50
-
-    # while ((completed <= total)); do
-    #     local percent=$((completed * 100 / total))
-    #     local filled=$((completed * bar_width / total))
-    #     local empty=$((bar_width - filled))
-
-    #     printf "\r[%-${filled}s%${empty}s] %3d%%" "#" "" "$percent"
-
-    #     sleep $interval
-    #     completed=$((completed + 1))
-    # done
-    # echo ""  # New line at the end
-    progress_bar() {
     local duration=$1  # Duration in seconds
-    local interval=0.1 # Update interval in seconds
+    local interval=0.1 # Update interval in seconds (as a float)
     local completed=0
-    local total=$((duration / interval))
+    local total=$(echo "$duration / $interval" | bc)  # Use bc to calculate total as an integer
     local bar_width=50
 
     while ((completed <= total)); do
@@ -71,12 +53,10 @@ progress_bar() {
         local empty=$((bar_width - filled))
 
         printf "\r[%-${bar_width}s] %3d%%" "$(printf '#%.0s' $(seq 1 $filled))" "$percent"
-
         sleep $interval
         completed=$((completed + 1))
     done
     echo ""  # New line at the end
-}
 }
 
 pacman() {
@@ -183,31 +163,31 @@ aur() {
 
 # Updating the system
 echo " Updating system.... "
-progress_bar 10
+progress_bar 5
 echo "System update completed."
 
 # Install pacman packages
 echo "Installing basic tools with pacman..."
 pacman &> /dev/null
-progress_bar 10
+progress_bar 5
 echo "Installing pacman packages completed."
 
 # Install virt-manager and configure firewalld
 echo "Installing virt-manager and dependencies..."
 virtmanager &> /dev/null
-progress_bar 10
+progress_bar 5
 echo "Installing virt-manager packages completed."
 
 # Install flatpak packages
 echo "Installing flatpak and packages..."
 flatpak &> /dev/null
-progress_bar 10
+progress_bar 5
 echo "Installing flatpak packages completed."
 
 # Install AUR packages
 echo "Installing AUR packages..."
 aur
-progress_bar 2
+progress_bar 5
 echo "Installing AUR packages completed."
 
 # Setting up plymouth with monoarch theme
@@ -215,7 +195,7 @@ echo "Configuring plymouth..."
 sed -i "/^HOOKS/s/\budev\b/& plymouth/" /etc/mkinitcpio.conf
 echo "Regenerating initramfs..."
 sudo mkinitcpio -p linux &> /dev/null
-progress_bar 10
+progress_bar 5
 
 # Adds plumouth to grub
 sed -i "/^GRUB_CMDLINE_LINUX_DEFAULT=/s/\bquiet\b/& splash rd.udev.log_priority=3 vt.global_cursor_default=0/" /etc/default/grub
@@ -230,7 +210,7 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg &> /dev/null
 # Apply the monoarch theme
 echo "Applying monoarch theme..."
 sudo plymouth-set-default-theme -R monoarch &> /dev/null
-progress_bar 10
+progress_bar 5
 echo "Installed monoarch theme successfully."
 
 # WIP
