@@ -67,7 +67,7 @@ virtmanager() {
         libguestfs
         swtpm
     )
-    sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
+    sudo pacman -S --needed --noconfirm --overwrite '*' "${VIRT_MANAGAER[@]}"
     # WIP
     # Configure firewalld for virt-manager
     # sudo systemctl enable --now firewalld &> /dev/null
