@@ -29,8 +29,8 @@ TEMP_SUDOERS="/etc/sudoers.d/temp-nopasswd-$ACTUAL_USER"
 echo "$ACTUAL_USER ALL=(ALL) NOPASSWD: ALL" > "$TEMP_SUDOERS"
 chmod 440 "$TEMP_SUDOERS"
 
-# Revert back the sudoers rule after the script execution
-trap 'echo "Cleaning up..."; rm -f "$TEMP_SUDOERS"' EXIT INT TERM
+set -e  # Exit on error
+trap 'echo "Cleaning up..."; sudo rm -f "$TEMP_SUDOERS"' EXIT INT TERM
 
 # Extracting the network device name for firewalld configuration (Virt-manager)
 NetDevice=$(ip route | awk '/default/ {print $5}')
@@ -131,13 +131,13 @@ aur() {
     if ! command -v yay &> /dev/null; then
         echo "yay is not installed. Installing yay..."
         # Create and switch to a temporary directory
-        TMP_DIR=$(mktemp -d) &> /dev/null
+        TMP_DIR=$(mktemp -d)
         trap "rm -rf $TMP_DIR" EXIT  # Ensure cleanup on script exit
-        chown "$ACTUAL_USER:$ACTUAL_USER" "$TMP_DIR" &> /dev/null
+        chown "$ACTUAL_USER:$ACTUAL_USER" "$TMP_DIR"
         sudo -u "$ACTUAL_USER" git clone https://aur.archlinux.org/yay.git "$TMP_DIR/yay"
         # Build and install yay
-        cd "$TMP_DIR/yay" &> /dev/null
-        sudo -u "$ACTUAL_USER" makepkg -si --noconfirm &> /dev/null
+        cd "$TMP_DIR/yay"
+        sudo -u "$ACTUAL_USER" makepkg -si --noconfirm
         echo "yay installation completed."
     else
         echo "yay is already installed."
