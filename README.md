@@ -9,3 +9,7 @@ PROJECT IS STILL WORK IN PROGRESS BUT THE POST-INSTALLATION SCRIPT WORKS
 ```ps1
 sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/iam-vasanth/Arch-postinstallation/main/Scripts/ArchPI.sh)"
 ```
+Test (For personal use)
+```ps1
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/iam-vasanth/Arch-postinstallation/main/Reference/ArchPI-test.sh)"
+```

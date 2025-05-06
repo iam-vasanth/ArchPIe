@@ -172,34 +172,34 @@ echo "Applying monoarch theme..."
 sudo plymouth-set-default-theme -R monoarch
 echo "Installed monoarch theme successfully."
 
-# # Mounting the second drive
-# sudo mkdir -p $MOUNT_POINT &> /dev/null
-# if grep -q "UUID=$UUID" /etc/fstab; then
-#     echo "The UUID $UUID already exists in /etc/fstab. Skipping entry."
-# else
-#     echo "Adding entry to /etc/fstab..."
-#     echo "UUID=$UUID $MOUNT_POINT ext4 nofail 0 0" >> /etc/fstab
-#     echo "Entry added successfully."
-#     sudo mount -a &> /dev/null
-#     echo "Mounted $MOUNT_POINT successfully."
-# fi
+# Mounting the second drive
+sudo mkdir -p $MOUNT_POINT &> /dev/null
+if grep -q "UUID=$UUID" /etc/fstab; then
+    echo "The UUID $UUID already exists in /etc/fstab. Skipping entry."
+else
+    echo "Adding entry to /etc/fstab..."
+    echo "UUID=$UUID $MOUNT_POINT ext4 nofail 0 0" >> /etc/fstab
+    echo "Entry added successfully."
+    sudo mount -a &> /dev/null
+    echo "Mounted $MOUNT_POINT successfully."
+fi
 
-# # Connecting to hypervisor
-# connect qemu:///system &> /dev/null
+# Connecting to hypervisor
+connect qemu:///system &> /dev/null
 
-# virt-install \
-#   --name win11-vm \
-#   --memory 8192 \
-#   --vcpus 6 \
-#   --os-variant Win11 \
-#   --disk size=150,path=/mnt/BigPP/win11-vm.qcow2,format=qcow2,bus=virtio \
-#   --cdrom /path/to/windows11.iso \
-#   --disk /mnt/BigPP/ISO/virtio-win-0.1.229.iso,device=cdrom \
-#   --network network=default \
-#   --graphics spice \
-#   --video qxl \
-#   --boot uefi \
-#   --tpm backend.type=emulator,model=tpm-crb
+virt-install \
+  --name win11-vm \
+  --memory 8192 \
+  --vcpus 6 \
+  --os-variant Win11 \
+  --disk size=150,path=/mnt/BigPP/win11-vm.qcow2,format=qcow2,bus=virtio \
+  --cdrom /path/to/windows11.iso \
+  --disk /mnt/BigPP/ISO/virtio-win-0.1.229.iso,device=cdrom \
+  --network network=default \
+  --graphics spice \
+  --video qxl \
+  --boot uefi \
+  --tpm backend.type=emulator,model=tpm-crb
 
 # virt-instll \
 #     --name arch-vm \

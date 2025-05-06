@@ -84,6 +84,8 @@ GRUB_TOP_LEVEL="/boot/vmlinuz-linux"
 
 # How to make network connection work in guest machines with firewalld on your host system
 
+
+Method-1 - Works
 sudo systemctl enable firewalld
 sudo systemctl start firewalld
 sudo systemctl net.ipv4.ip_forward=1
@@ -101,6 +103,27 @@ sudo firewall-cmd --reload
 sudo systemctl restart firewalld
 sudo systemctl restart libvirtd
 
+Method-2 - yet to test
+# Create a zone for libvirt
+sudo firewall-cmd --permanent --new-zone=libvirt
+
+# Enable masquerading on the libvirt zone
+sudo firewall-cmd --permanent --zone=libvirt --add-masquerade
+
+# Add the virtual bridge interface to the libvirt zone
+sudo firewall-cmd --permanent --zone=libvirt --add-interface=virbr0
+
+# Reload the firewall to apply changes
+sudo firewall-cmd --reload
+
+# Start the default network if not already running
+sudo virsh net-start default
+
+# Enable autostart for the default network
+sudo virsh net-autostart default
+
+echo "net.ipv4.ip_forward = 1" | sudo tee /etc/sysctl.d/99-network.conf
+sudo sysctl -p /etc/sysctl.d/99-network.conf
 
 # How to make network connectinon in guest with UFW firewall on your host system
 
