@@ -35,10 +35,10 @@ trap 'echo "Cleaning up..."; rm -f "$TEMP_SUDOERS"' EXIT INT TERM
 # Extracting the network device name for firewalld configuration (Virt-manager)
 NetDevice=$(ip route | awk '/default/ {print $5}')
 
-# Mounting second drive
-lsblk -o UUID,TYPE,SIZE,MOUNTPOINT
-read -p "Enter the UUID of the second drive: " UUID
-read -p "Enter the mount point (e.g., /mnt/Folder_name): " MOUNT_POINT
+# # Mounting second drive
+# lsblk -o UUID,TYPE,SIZE,MOUNTPOINT
+# read -p "Enter the UUID of the second drive: " UUID
+# read -p "Enter the mount point (e.g., /mnt/Folder_name): " MOUNT_POINT
 
 # WIP
 # Extrating the KVM virtual network device name for virt-manager
@@ -192,16 +192,17 @@ echo "Applying monoarch theme..."
 sudo plymouth-set-default-theme -R monoarch &> /dev/null
 echo "Installed monoarch theme successfully."
 
-sudo mkdir -p $MOUNT_POINT &> /dev/null
-if grep -q "UUID=$UUID" /etc/fstab; then
-    echo "The UUID $UUID already exists in /etc/fstab. Skipping entry."
-else
-    echo "Adding entry to /etc/fstab..."
-    echo "UUID=$UUID $MOUNT_POINT ext4 defaults 0 2" >> /etc/fstab
-    echo "Entry added successfully."
-    sudo mount -a &> /dev/null
-    echo "Mounted $MOUNT_POINT successfully."
-fi
+# # Mounting the second drive
+# sudo mkdir -p $MOUNT_POINT &> /dev/null
+# if grep -q "UUID=$UUID" /etc/fstab; then
+#     echo "The UUID $UUID already exists in /etc/fstab. Skipping entry."
+# else
+#     echo "Adding entry to /etc/fstab..."
+#     echo "UUID=$UUID $MOUNT_POINT ext4 nofail 0 0" >> /etc/fstab
+#     echo "Entry added successfully."
+#     sudo mount -a &> /dev/null
+#     echo "Mounted $MOUNT_POINT successfully."
+# fi
 
 # # Connecting to hypervisor
 # connect qemu:///system &> /dev/null
