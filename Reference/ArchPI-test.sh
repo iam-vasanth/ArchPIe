@@ -191,10 +191,10 @@ virt-install \
   --name win11-vm \
   --memory 8192 \
   --vcpus 6 \
-  --os-variant Win11 \
+  --os-variant win11 \
   --disk size=150,path=/mnt/BigPP/win11-vm.qcow2,format=qcow2,bus=virtio \
-  --cdrom /path/to/windows11.iso \
-  --disk /mnt/BigPP/ISO/virtio-win-0.1.229.iso,device=cdrom \
+  --cdrom /mnt/BigPP/ISOs/microwin11vm.iso \
+  --disk /mnt/BigPP/ISOs/virtio-win-0.1.266.iso,device=cdrom \
   --network network=default \
   --graphics spice \
   --video qxl \
