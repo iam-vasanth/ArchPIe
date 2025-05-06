@@ -63,7 +63,7 @@ pacman() {
         wine-gecko
         partitionmanager
     )
-    sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}" &> /dev/null
+    sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
 }
 
 virtmanager() {
@@ -79,7 +79,7 @@ virtmanager() {
         libguestfs
         swtpm
     )
-    sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}" &> /dev/null
+    sudo pacman -S --needed --noconfirm "${VIRT_MANAGAER[@]}"
     # WIP
     # Configure firewalld for virt-manager
     # sudo systemctl enable --now firewalld &> /dev/null
@@ -111,13 +111,13 @@ flatpak() {
         com.stremio.Stremio
     )
     # Flatpak setup
-    sudo pacman -S --needed --noconfirm flatpak &> /dev/null
+    sudo pacman -S --needed --noconfirm flatpak
 
     #Configuring Flatpak as user
-    sudo -u $ACTUAL_USER flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo &> /dev/null
+    sudo -u $ACTUAL_USER flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
     # Install flatpak packages
-    sudo -u $ACTUAL_USER flatpak install -y flathub "${FLATPAK_PACKAGES[@]}" &> /dev/null
+    sudo -u $ACTUAL_USER flatpak install -y flathub "${FLATPAK_PACKAGES[@]}"
 }
 
 aur() {
@@ -143,7 +143,7 @@ aur() {
         echo "yay is already installed."
     fi
     # Install AUR packages using yay
-    sudo -u $ACTUAL_USER bash -c "yay -S --needed --noconfirm ${AUR_PACKAGES[*]}" &> /dev/null
+    sudo -u $ACTUAL_USER bash -c "yay -S --needed --noconfirm ${AUR_PACKAGES[*]}"
 }
 
 # Updating the system
@@ -175,7 +175,7 @@ echo "Installing AUR packages completed."
 echo "Configuring plymouth..."
 sed -i "/^HOOKS/s/\budev\b/& plymouth/" /etc/mkinitcpio.conf
 echo "Regenerating initramfs..."
-sudo mkinitcpio -p linux &> /dev/null
+sudo mkinitcpio -p linux
 
 # Adds plumouth to grub
 sed -i "/^GRUB_CMDLINE_LINUX_DEFAULT=/s/\bquiet\b/& splash rd.udev.log_priority=3 vt.global_cursor_default=0/" /etc/default/grub
@@ -185,11 +185,11 @@ sed -i '/^GRUB_CMDLINE_LINUX=/a \\n# Linux-LTS to Linux\nGRUB_TOP_LEVEL="/boot/v
 
 # Build grub configuration
 echo "Building grub configuration..."
-sudo grub-mkconfig -o /boot/grub/grub.cfg &> /dev/null
+sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 # Apply the monoarch theme
 echo "Applying monoarch theme..."
-sudo plymouth-set-default-theme -R monoarch &> /dev/null
+sudo plymouth-set-default-theme -R monoarch
 echo "Installed monoarch theme successfully."
 
 # # Mounting the second drive
