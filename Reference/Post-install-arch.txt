@@ -27,14 +27,15 @@ sudo pacman -S --needed base-devel && git clone https://aur.archlinux.org/paru.g
 
 Step-4 : Installing necessary packages
 
-sudo pacman -S --needed firefox neovim plymouth fuse steam wine winetricks wine-mono wine-gecko flatpak partitionmanager discord spotify-launcher
+sudo pacman -S --needed neovim plymouth fuse steam wine winetricks wine-mono wine-gecko flatpak grub-btfs
 
 **Virt-manager setup**
 
-sudo pacman -S qemu-full libvirt-daemon virt-manager virt-viewer bridge-utils libguestfs swtpm
+sudo pacman -S --needed virt-manager qemu-full virt-viewer dnsmasq bridge-utils libguestfs ebtables iptables-nft swtpm
 sudo systemctl enable --now libvirtd
-sudo usermod -aG libvirt zoro
-
+sudo usermod -aG libvirt $(whoami)
+sudo virsh net-autostart default
+sudo virsh net-start default
 ===========================================================================================================================
 
 Step-5 : Playmouth with monoarch theme
@@ -84,26 +85,6 @@ GRUB_TOP_LEVEL="/boot/vmlinuz-linux"
 
 # How to make network connection work in guest machines with firewalld on your host system
 
-
-Method-1 - Works
-sudo systemctl enable firewalld
-sudo systemctl start firewalld
-sudo systemctl net.ipv4.ip_forward=1
-sudo systemctl net.ipv6.conf.all.forwarding=1
-ip link
-ip route get 8.8.8.8
-sudo firewall-cmd --zone=external --change-interface=wlan0 --permanent
-sudo firewall-cmd --zone=internal --change-interface=virbr0 --permanent
-sudo firewall-cmd --reload
-sudo firewall-cmd --permanent --new-policy int2ext
-sudo firewall-cmd --permanent --policy  int2ext --add-ingress-zone internal
-sudo firewall-cmd --permanent --policy  int2ext --add-egress-zone external
-sudo firewall-cmd --permanent --policy int2ext --set-target ACCEPT
-sudo firewall-cmd --reload
-sudo systemctl restart firewalld
-sudo systemctl restart libvirtd
-
-Method-2 - yet to test
 # Create a zone for libvirt
 sudo firewall-cmd --permanent --new-zone=libvirt
 
@@ -125,25 +106,24 @@ sudo virsh net-autostart default
 echo "net.ipv4.ip_forward = 1" | sudo tee /etc/sysctl.d/99-network.conf
 sudo sysctl -p /etc/sysctl.d/99-network.conf
 
-# How to make network connectinon in guest with UFW firewall on your host system
+==========================================================================================================
 
-sudo nvim /etc/default/ufw
+mkdir -p ~/.config/autostart
+nvim ~/.config/autostart/steam-silent.desktop
 
-Change DROP to ACCEPT
+# Steam
+[Desktop Entry]
+Type=Application
+Name=Steam (Silent)
+Exec=steam -silent -nochatui -nofriendsui
+X-GNOME-Autostart-enabled=true
+NoDisplay=false
 
-DEFAULT_FORWARD_POLICY="ACCEPT"
-
-sudo nvim /etc/ufw/before.rules
-
-Add this below block at the end.
-
-# Allow forwarding for libvirtd
-*nat
-:POSTROUTING ACCEPT [0:0]
--A POSTROUTING -s 192.168.122.0/24 -o wlan0 -j MASQUERADE
-commit
-
-Add this below block after "*filter" before "commit"
-
--A ufw-before-forward -i virbr0 -j ACCEPT
--A ufw-before-forward -o virbr0 -j ACCEPT
+# Equibop
+[Desktop Entry]
+Type=Application
+Name=Equibop
+Comment=Equibop autostart script
+Exec="/usr/lib/electron36/electron" "--gtk-version=3" "/usr/lib/equibop/app.asar" "env ELECTRON_OZONE_PLATFORM_HINT=auto" ""
+StartupNotify=false
+Terminal=false
