@@ -114,8 +114,8 @@ nvim ~/.config/autostart/steam-silent.desktop
 # Steam
 [Desktop Entry]
 Type=Application
-Name=Steam (Silent)
-Exec=steam -silent -nochatui -nofriendsui
+Name=Steam
+Exec=steam -silent --start-minimized -nochatui -nofriendsui
 X-GNOME-Autostart-enabled=true
 NoDisplay=false
 
@@ -124,6 +124,6 @@ NoDisplay=false
 Type=Application
 Name=Equibop
 Comment=Equibop autostart script
-Exec="/usr/lib/electron36/electron" "--gtk-version=3" "/usr/lib/equibop/app.asar" "env ELECTRON_OZONE_PLATFORM_HINT=auto" ""
+Exec="/usr/lib/electron36/electron" "--no-sandbox" "--start-minimized" "--gtk-version=3" "/usr/lib/equibop/app.asar" "env ELECTRON_OZONE_PLATFORM_HINT=auto" ""
 StartupNotify=false
 Terminal=false
