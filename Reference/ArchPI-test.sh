@@ -29,8 +29,25 @@ TEMP_SUDOERS="/etc/sudoers.d/temp-nopasswd-$ACTUAL_USER"
 echo "$ACTUAL_USER ALL=(ALL) NOPASSWD: ALL" > "$TEMP_SUDOERS"
 chmod 440 "$TEMP_SUDOERS"
 
-set -e  # Exit on error
-trap 'echo "Cleaning up..."; sudo rm -f "$TEMP_SUDOERS"' EXIT INT TERM
+# Exit on error
+set -e
+set -E 
+
+ERROR_LOG="/var/log/script_errors.txt"
+TEMP_SUDOERS="/tmp/sudoers.tmp"
+
+# Trap errors and log them
+trap 'echo "Error occurred at line $LINENO. Exit code: $?" | tee -a "$ERROR_LOG"; cleanup' ERR
+
+# Trap normal exit/interrupt for cleanup
+trap 'cleanup' EXIT INT TERM
+
+cleanup() {
+    echo "Cleaning up..." | tee -a "$ERROR_LOG"
+    sudo rm -f "$TEMP_SUDOERS"
+}
+
+# Your script continues here...
 
 # Extracting the network device name for firewalld configuration (Virt-manager)
 NetDevice=$(ip route | awk '/default/ {print $5}')

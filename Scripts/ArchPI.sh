@@ -29,20 +29,28 @@ TEMP_SUDOERS="/etc/sudoers.d/temp-nopasswd-$ACTUAL_USER"
 echo "$ACTUAL_USER ALL=(ALL) NOPASSWD: ALL" > "$TEMP_SUDOERS"
 chmod 440 "$TEMP_SUDOERS"
 
-set -e  # Exit on error
-trap 'echo "Cleaning up..."; sudo rm -f "$TEMP_SUDOERS"' EXIT INT TERM
+# Exit on error
+set -e
+set -E 
 
-# Extracting the network device name for firewalld configuration (Virt-manager)
-NetDevice=$(ip route | awk '/default/ {print $5}')
+ERROR_LOG="/var/log/script_errors.txt"
+TEMP_SUDOERS="/tmp/sudoers.tmp"
+
+# Trap errors and log them
+trap 'echo "Error occurred at line $LINENO. Exit code: $?" | tee -a "$ERROR_LOG"; cleanup' ERR
+
+# Trap normal exit/interrupt for cleanup
+trap 'cleanup' EXIT INT TERM
+
+cleanup() {
+    echo "Cleaning up..." | tee -a "$ERROR_LOG"
+    sudo rm -f "$TEMP_SUDOERS"
+}
 
 # # Mounting second drive
 # lsblk -o UUID,TYPE,SIZE,MOUNTPOINT
 # read -p "Enter the UUID of the second drive: " UUID
 # read -p "Enter the mount point (e.g., /mnt/Folder_name): " MOUNT_POINT
-
-# WIP
-# Extrating the KVM virtual network device name for virt-manager
-# KVM_NetDevice=$
 
 pacman() {
     # Defining the pacman packages to be installed
@@ -51,8 +59,6 @@ pacman() {
         firewalld
         git
         jdk-openjdk
-        firefox
-        discord
         neovim
         plymouth
         fuse
@@ -61,7 +67,6 @@ pacman() {
         winetricks
         wine-mono
         wine-gecko
-        partitionmanager
     )
     sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
 }
@@ -101,7 +106,6 @@ flatpak() {
     # Define flatpak packages
     FLATPAK_PACKAGES=(
         com.spotify.Client
-        com.discordapp.Discord
         org.videolan.VLC
         com.github.tchx84.Flatseal
         org.qbittorrent.qBittorrent
