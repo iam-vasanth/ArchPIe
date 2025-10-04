@@ -1,61 +1,176 @@
 #!/bin/bash
 
-# To run the script with sudo privileges
-if [ "$EUID" -ne 0 ]; then
-    echo "Script not running with sudo privileges. Elevating permissions..."
-    if [ -f "$0" ]; then
-        exec sudo "$0" "$@"
-    else
-        echo "Error: Script must be run as a file, not via a pipe or redirected input."
-        exit 1
-    fi
-fi
-
-# Refresh sudo credentials and keep them alive
-echo "Caching sudo credentials..."
-sudo -v &> /dev/null
-while true; do sudo -n true &> /dev/null ; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-
-# Store the actual username (not root)
-ACTUAL_USER=$(logname || echo $SUDO_USER)
-if [ -z "$ACTUAL_USER" ]; then
-    ACTUAL_USER=$(who | awk '{print $1; exit}')
-fi
-HOME_DIR="/home/$ACTUAL_USER"
-
-# Create temporary sudoers rule for yay package installation (Optional). 
-# This code block is removable but it will defeat the purpose of entering the sudo password one time and that it's a automatic installation script.
-TEMP_SUDOERS="/etc/sudoers.d/temp-nopasswd-$ACTUAL_USER"
-echo "$ACTUAL_USER ALL=(ALL) NOPASSWD: ALL" > "$TEMP_SUDOERS"
-chmod 440 "$TEMP_SUDOERS"
-
 # Exit on error
 set -e
 set -E 
-
 ERROR_LOG="/var/log/script_errors.txt"
-TEMP_SUDOERS="/tmp/sudoers.tmp"
 
 # Trap errors and log them
 trap 'echo "Error occurred at line $LINENO. Exit code: $?" | tee -a "$ERROR_LOG"; cleanup' ERR
-
 # Trap normal exit/interrupt for cleanup
 trap 'cleanup' EXIT INT TERM
-
 cleanup() {
     echo "Cleaning up..." | tee -a "$ERROR_LOG"
-    sudo rm -f "$TEMP_SUDOERS"
 }
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Log messages
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+# Check if running as root
+if [[ $EUID -eq 0 ]]; then
+    log_error "This script should NOT be run as root. Run as normal user."
+    exit 1
+fi
+
+# Check if running as root
+if [[ $EUID -eq 0 ]]; then
+    log_error "This script should NOT be run as root. Run as normal user."
+    exit 1
+fi
+
+# Refresh sudo timestamp and keep it alive
+keep_sudo_alive() {
+    sudo -v
+    while true; do
+        sudo -n true
+        sleep 50
+        kill -0 "$$" || exit
+    done 2>/dev/null &
+    SUDO_KEEPER_PID=$!
+}
+
+# Stop the sudo keeper background process when the script is exited
+stop_sudo_keeper() {
+    if [[ -n "$SUDO_KEEPER_PID" ]]; then
+        kill "$SUDO_KEEPER_PID" 2>/dev/null || true
+    fi
+}
+
+# Progress bar function
+show_progress() {
+    local current=$1
+    local total=$2
+    local width=50
+    local percentage=$((current * 100 / total))
+    local completed=$((width * current / total))
+    local remaining=$((width - completed))
+    
+    printf "\r${GREEN}[${NC}"
+    printf "%${completed}s" | tr ' ' '█'
+    printf "%${remaining}s" | tr ' ' '░'
+    printf "${GREEN}]${NC} %3d%% (%d/%d)" "$percentage" "$current" "$total"
+}
+
+
+# # Store the actual username (not root)
+# ACTUAL_USER=$(logname || echo $SUDO_USER)
+# if [ -z "$ACTUAL_USER" ]; then
+#     ACTUAL_USER=$(who | awk '{print $1; exit}')
+# fi
+# HOME_DIR="/home/$ACTUAL_USER"
+
+# # Create temporary sudoers rule for yay package installation (Optional). 
+# # This code block is removable but it will defeat the purpose of entering the sudo password one time and that it's a automatic installation script.
+# TEMP_SUDOERS="/etc/sudoers.d/temp-nopasswd-$ACTUAL_USER"
+# echo "$ACTUAL_USER ALL=(ALL) NOPASSWD: ALL" > "$TEMP_SUDOERS"
+# chmod 440 "$TEMP_SUDOERS"
 
 # # Mounting second drive
 # lsblk -o UUID,TYPE,SIZE,MOUNTPOINT
 # read -p "Enter the UUID of the second drive: " UUID
 # read -p "Enter the mount point (e.g., /mnt/Folder_name): " MOUNT_POINT
 
-pacman() {
-    # Defining the pacman packages to be installed
-    PACMAN_PACKAGES=(
-        lib32-nvidia-utils
+# Normal system upgrade
+sudo pacman -Syu --noconfirm
+
+# Detect GPU and install appropriate drivers
+detect_and_install_gpu_drivers() {
+    log_info "Detecting GPU..."
+    local GPU_PACKAGES=()
+    local gpu_detected=false
+    
+    # Detect NVIDIA
+    if lspci | grep -i nvidia > /dev/null; then
+        log_info "NVIDIA GPU detected"
+        GPU_PACKAGES+=(
+            nvidia-utils
+            lib32-nvidia-utils
+            nvidia-settings
+        )
+        gpu_detected=true
+    fi
+    
+    # Detect AMD
+    if lspci | grep -iE "vga|3d|display" | grep -iE "amd|ati|radeon" > /dev/null; then
+        log_info "AMD GPU detected"
+        GPU_PACKAGES+=(
+            mesa
+            lib32-mesa
+            vulkan-radeon
+            lib32-vulkan-radeon
+            libva-mesa-driver
+            lib32-libva-mesa-driver
+            mesa-vdpau
+            lib32-mesa-vdpau
+        )
+        gpu_detected=true
+    fi
+    
+    # Detect Intel
+    if lspci | grep -iE "vga|3d|display" | grep -i "intel" > /dev/null; then
+        log_info "Intel GPU detected"
+        GPU_PACKAGES+=(
+            mesa
+            lib32-mesa
+            vulkan-intel
+            lib32-vulkan-intel
+            intel-media-driver
+            libva-intel-driver
+        )
+        gpu_detected=true
+    fi
+    
+    if [[ "$gpu_detected" = false ]]; then
+        log_warn "No specific GPU detected, installing generic drivers"
+        GPU_PACKAGES+=(
+            mesa
+            lib32-mesa
+        )
+    fi
+    
+    # Install GPU packages
+    if [[ ${#GPU_PACKAGES[@]} -gt 0 ]]; then
+        log_info "Installing GPU drivers and 32-bit libraries for gaming..."
+        if sudo pacman -S --needed --noconfirm "${GPU_PACKAGES[@]}" > /tmp/gpu_install.log 2>&1; then
+            log_info "✓ GPU drivers installed successfully"
+        else
+            log_error "✗ Failed to install GPU drivers"
+            log_error "Check /tmp/gpu_install.log for details"
+            return 1
+        fi
+    fi
+}
+
+# Install pacman packages
+install_pacman_packages() {
+    log_info "Installing pacman packages..."
+    local PACMAN_PACKAGES=(
         firewalld
         git
         jdk-openjdk
@@ -67,8 +182,22 @@ pacman() {
         winetricks
         wine-mono
         wine-gecko
+        lutris
     )
-    sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
+    
+    local total=${#PACMAN_PACKAGES[@]}
+    echo -e "${YELLOW}Installing $total pacman packages...${NC}"
+    
+    if sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}" > /tmp/pacman_install.log 2>&1; then
+        show_progress "$total" "$total"
+        echo ""
+        log_info "✓ Pacman packages installed successfully"
+    else
+        echo ""
+        log_error "✗ Failed to install pacman packages"
+        log_error "Check /tmp/pacman_install.log for details"
+        return 1
+    fi
 }
 
 virtmanager() {
@@ -79,8 +208,6 @@ virtmanager() {
         virt-viewer
         bridge-utils
         dnsmasq
-        ebtables
-        iptables
         libguestfs
         swtpm
     )
@@ -100,6 +227,50 @@ virtmanager() {
     # sudo firewall-cmd --reload
     # sudo systemctl restart firewalld
     # sudo systemctl restart libvirtd
+}
+
+# Install and configure virt-manager
+install_virt_manager() {
+    log_info "Installing virt-manager and dependencies..."
+    local VIRT_PACKAGES=(
+        virt-manager
+        qemu-full
+        virt-viewer
+        libvirt
+        edk2-ovmf
+        dnsmasq
+        bridge-utils
+        libguestfs
+        swtpm
+    )
+    local total=${#VIRT_PACKAGES[@]}
+    echo -e "${YELLOW}Installing $total virtualization packages...${NC}"
+    
+    if sudo pacman -S --needed --noconfirm "${VIRT_PACKAGES[@]}" > /tmp/virt_install.log 2>&1; then
+        show_progress "$total" "$total"
+        echo ""
+        log_info "✓ Virtualization packages installed successfully"
+        
+        # Enable and start libvirtd service
+        log_info "Configuring libvirt service..."
+        sudo systemctl enable --now libvirtd > /dev/null 2>&1
+        
+        # Add user to libvirt group
+        log_info "Adding user to libvirt group..."
+        sudo usermod -aG libvirt "$USER"
+        
+        # Start default network
+        sudo virsh net-autostart default > /dev/null 2>&1
+        sudo virsh net-start default > /dev/null 2>&1 || true
+        
+        log_info "✓ virt-manager configured successfully"
+        log_warn "You need to log out and back in for group changes to take effect"
+    else
+        echo ""
+        log_error "✗ Failed to install virtualization packages"
+        log_error "Check /tmp/virt_install.log for details"
+        return 1
+    fi
 }
 
 flatpak() {
