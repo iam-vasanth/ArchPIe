@@ -96,9 +96,6 @@ show_progress() {
 # read -p "Enter the UUID of the second drive: " UUID
 # read -p "Enter the mount point (e.g., /mnt/Folder_name): " MOUNT_POINT
 
-# Normal system upgrade
-sudo pacman -Syu --noconfirm
-
 # Detect GPU and install appropriate drivers
 detect_and_install_gpu_drivers() {
     log_info "Detecting GPU..."
@@ -183,6 +180,7 @@ install_pacman_packages() {
         wine-mono
         wine-gecko
         lutris
+        discord
     )
     
     local total=${#PACMAN_PACKAGES[@]}
@@ -200,35 +198,6 @@ install_pacman_packages() {
     fi
 }
 
-virtmanager() {
-    # Define packages needed for virt-manager
-    VIRT_MANAGAER=(
-        qemu-full
-        virt-manager
-        virt-viewer
-        bridge-utils
-        dnsmasq
-        libguestfs
-        swtpm
-    )
-    sudo pacman -S --needed --noconfirm --overwrite '*' "${VIRT_MANAGAER[@]}"
-    # WIP
-    # Configure firewalld for virt-manager
-    # sudo systemctl enable --now firewalld &> /dev/null
-    # # Have to add a SED - sudo systemctl net.ipv4.ip_forward=1
-    # # Have to add a SED - sudo systemctl net.ipv6.conf.all.forwarding=1
-    # sudo firewall-cmd --zone=external --change-interface=$NetDevice --permanent
-    # sudo firewall-cmd --zone=internal --change-interface=virbr0 --permanent
-    # sudo firewall-cmd --reload
-    # sudo firewall-cmd --permanent --new-policy int2ext
-    # sudo firewall-cmd --permanent --policy  int2ext --add-ingress-zone internal
-    # sudo firewall-cmd --permanent --policy  int2ext --add-egress-zone external
-    # sudo firewall-cmd --permanent --policy int2ext --set-target ACCEPT
-    # sudo firewall-cmd --reload
-    # sudo systemctl restart firewalld
-    # sudo systemctl restart libvirtd
-}
-
 # Install and configure virt-manager
 install_virt_manager() {
     log_info "Installing virt-manager and dependencies..."
@@ -241,6 +210,8 @@ install_virt_manager() {
         dnsmasq
         bridge-utils
         libguestfs
+        dmidecode
+        vde2
         swtpm
     )
     local total=${#VIRT_PACKAGES[@]}
@@ -273,78 +244,199 @@ install_virt_manager() {
     fi
 }
 
-flatpak() {
-    # Define flatpak packages
-    FLATPAK_PACKAGES=(
-        com.spotify.Client
-        org.videolan.VLC
-        com.github.tchx84.Flatseal
-        org.qbittorrent.qBittorrent
-        com.usebottles.bottles
-        net.davidotek.pupgui2                   #ProtonUp-Qt
-        org.libreoffice.LibreOffice
-        com.stremio.Stremio
-    )
-    # Flatpak setup
-    sudo pacman -S --needed --noconfirm flatpak
-
-    #Configuring Flatpak as user
-    sudo -u $ACTUAL_USER flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-
-    # Install flatpak packages
-    sudo -u $ACTUAL_USER flatpak install -y flathub "${FLATPAK_PACKAGES[@]}"
-}
-
-aur() {
-    # Define AUR packages
-    AUR_PACKAGES=(
-        visual-studio-code-bin
-        plymouth-theme-monoarch
-    )
-
-    # Cheking if yay is installed. if not, install yay
-    if ! command -v yay &> /dev/null; then
-        echo "yay is not installed. Installing yay..."
-        # Create and switch to a temporary directory
-        TMP_DIR=$(mktemp -d)
-        trap "rm -rf $TMP_DIR" EXIT  # Ensure cleanup on script exit
-        chown "$ACTUAL_USER:$ACTUAL_USER" "$TMP_DIR"
-        sudo -u "$ACTUAL_USER" git clone https://aur.archlinux.org/yay.git "$TMP_DIR/yay"
-        # Build and install yay
-        cd "$TMP_DIR/yay"
-        sudo -u "$ACTUAL_USER" makepkg -si --noconfirm
-        echo "yay installation completed."
-    else
-        echo "yay is already installed."
+# Install Flatpak packages
+install_flatpak_packages() {
+    log_info "Installing Flatpak packages..."
+    
+    # Ensure flatpak is installed
+    if ! command -v flatpak &> /dev/null; then
+        log_warn "Flatpak not found, installing..."
+        sudo pacman -S --needed --noconfirm flatpak > /dev/null 2>&1
     fi
-    # Install AUR packages using yay
-    sudo -u $ACTUAL_USER bash -c "yay -S --needed --noconfirm ${AUR_PACKAGES[*]}"
+    
+    # Add Flathub repository (system) - for actual installations
+    if ! flatpak remote-list --system | grep -q flathub 2>/dev/null; then
+        log_info "Adding Flathub repository (system)..."
+        sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo > /dev/null 2>&1
+    fi
+    
+    # Add Flathub repository (user) - for GNOME Software options
+    log_info "Adding Flathub repository (user - for GNOME Software)..."
+    flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo > /dev/null 2>&1
+    
+    local FLATPAK_PACKAGES=(
+        com.spotify.Client
+        com.mattjakeman.ExtensionManager
+        com.github.tchx84.Flatseal
+        org.videolan.VLC
+        ode.haeckerfelix.Fragments
+        com.usebottles.bottles
+        org.libreoffice.LibreOffice
+        org.localsend.localsend_app
+    )
+    
+    local total=${#FLATPAK_PACKAGES[@]}
+    local current=0
+    
+    echo -e "${YELLOW}Installing $total Flatpak packages (system-wide)...${NC}"
+    
+    for pkg in "${FLATPAK_PACKAGES[@]}"; do
+        if flatpak list --system | grep -q "$pkg" 2>/dev/null; then
+            ((current++))
+            show_progress "$current" "$total"
+        else
+            if sudo flatpak install -y --system flathub "$pkg" > /tmp/flatpak_install.log 2>&1; then
+                ((current++))
+                show_progress "$current" "$total"
+            else
+                echo ""
+                log_error "✗ Failed to install $pkg"
+                log_error "Check /tmp/flatpak_install.log for details"
+            fi
+        fi
+    done
+    
+    echo ""
+    log_info "✓ Flatpak packages installation completed (system-wide for Btrfs compatibility)"
 }
 
-# Updating the system
-echo " Updating system.... "
-sudo pacman -Syu --noconfirm
-echo "System update completed."
+# Install AUR helper (yay) if not present
+install_yay() {
+    if command -v yay &> /dev/null; then
+        log_info "yay is already installed"
+        return 0
+    fi
+    log_info "Installing yay AUR helper..."
 
-# Install pacman packages
-echo "Installing basic tools with pacman..."
-pacman
-echo "Installing pacman packages completed."
-
-# Install virt-manager and configure firewalld
-echo "Installing virt-manager and dependencies..."
-virtmanager
-echo "Installing virt-manager packages completed."
-
-# Install flatpak packages
-echo "Installing flatpak and packages..."
-flatpak
-echo "Installing flatpak packages completed."
+    local YAY_DIR="/tmp/yay-install"
+    rm -rf "$YAY_DIR"
+    
+    git clone https://aur.archlinux.org/yay.git "$YAY_DIR" > /tmp/yay_install.log 2>&1
+    cd "$YAY_DIR"
+    
+    if makepkg -si --noconfirm > /tmp/yay_install.log 2>&1; then
+        log_info "✓ yay installed successfully"
+        cd - > /dev/null
+        rm -rf "$YAY_DIR"
+    else
+        log_error "✗ Failed to install yay"
+        log_error "Check /tmp/yay_install.log for details"
+        cd - > /dev/null
+        return 1
+    fi
+}
 
 # Install AUR packages
-echo "Installing AUR packages..."
-aur
-echo "Installing AUR packages completed."
+install_aur_packages() {
+    log_info "Installing AUR packages..."
+    
+    local AUR_PACKAGES=(
+        plymouth-theme-monoarch
+        visual-studio-code-bin
+        an-anime-game-launcher-bin
+    )
+    
+    if [[ ${#AUR_PACKAGES[@]} -eq 0 ]]; then
+        log_warn "No AUR packages to install"
+        return 0
+    fi
+    
+    local total=${#AUR_PACKAGES[@]}
+    echo -e "${YELLOW}Installing $total AUR packages...${NC}"
+    
+    if yay -S --needed --noconfirm "${AUR_PACKAGES[@]}" > /tmp/aur_install.log 2>&1; then
+        show_progress "$total" "$total"
+        echo ""
+        log_info "✓ AUR packages installed successfully"
+    else
+        echo ""
+        log_error "✗ Failed to install AUR packages"
+        log_error "Check /tmp/aur_install.log for details"
+        return 1
+    fi
+}
+
+# System configurations
+configure_plymouth() {
+    log_info "Configuring Plymouth boot splash..."
+    
+    # Check if plymouth is installed
+    if ! command -v plymouth-set-default-theme &> /dev/null; then
+        log_error "Plymouth not installed"
+        return 1
+    fi
+    
+    # Add plymouth hook if not already present in mkinitcpio
+    if ! grep -q "plymouth" /etc/mkinitcpio.conf; then
+        log_info "Adding plymouth hook to mkinitcpio..."
+        sudo sed -i 's/^HOOKS=(\(.*\)udev\(.*\))/HOOKS=(\1udev plymouth\2)/' /etc/mkinitcpio.conf
+    else
+        log_info "Plymouth hook already present in mkinitcpio"
+    fi
+    
+    # Add plymouth parameters to GRUB if not already present
+    if ! grep -q "splash" /etc/default/grub; then
+        log_info "Adding plymouth parameters to GRUB..."
+        sudo sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/s/quiet/quiet splash rd.udev.log_priority=3 vt.global_cursor_default=0/' /etc/default/grub
+    else
+        log_info "Plymouth parameters already present in GRUB"
+    fi
+    
+    # Set plymouth theme
+    log_info "Setting Plymouth theme..."
+    local available_themes
+    available_themes=$(sudo plymouth-set-default-theme -l 2>/dev/null)
+    
+    if echo "$available_themes" | grep -q "connect"; then
+        sudo plymouth-set-default-theme connect > /dev/null 2>&1
+        log_info "Theme set to: Connect"
+    else
+        sudo plymouth-set-default-theme bgrt > /dev/null 2>&1 || \
+        sudo plymouth-set-default-theme spinner > /dev/null 2>&1
+        log_warn "monoarch theme not found, using default"
+    fi
+    
+    # Rebuild initramfs
+    log_info "Rebuilding initramfs..."
+    sudo mkinitcpio -P > /dev/null 2>&1
+    
+    # Rebuild GRUB configuration
+    log_info "Rebuilding GRUB configuration..."
+    sudo grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
+    
+    log_info "✓ Plymouth configured successfully"
+}
+
+# Main execution
+main() {
+    log_info "Starting system setup script..."
+    log_info "Error log: $ERROR_LOG"
+    
+    # Ask for sudo password once and keep it alive
+    log_info "This script requires sudo privileges"
+    keep_sudo_alive
+    
+    # Detect and install GPU drivers first
+    detect_and_install_gpu_drivers
+    
+    # Run installations
+    install_pacman_packages
+    install_flatpak_packages
+    install_yay
+    install_aur_packages
+    
+    # Run configurations
+    configure_plymouth
+    
+    # Stop sudo keeper
+    stop_sudo_keeper
+    
+    log_info "Setup completed successfully!"
+    log_info "Please reboot your system for all changes to take effect."
+}
+
+# Run main function
+main "$@"
 
 # Setting up plymouth with monoarch theme
 echo "Configuring plymouth..."
@@ -355,9 +447,6 @@ sudo mkinitcpio -p linux
 # Adds plumouth to grub
 sed -i "/^GRUB_CMDLINE_LINUX_DEFAULT=/s/\bquiet\b/& splash rd.udev.log_priority=3 vt.global_cursor_default=0/" /etc/default/grub
 
-# Ensures system boots into linux kernel instead of linux-lts by default
-sed -i '/^GRUB_CMDLINE_LINUX=/a \\n# Linux-LTS to Linux\nGRUB_TOP_LEVEL="/boot/vmlinuz-linux"' /etc/default/grub
-
 # Build grub configuration
 echo "Building grub configuration..."
 sudo grub-mkconfig -o /boot/grub/grub.cfg
@@ -366,6 +455,7 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 echo "Applying monoarch theme..."
 sudo plymouth-set-default-theme -R monoarch
 echo "Installed monoarch theme successfully."
+
 
 # # Mounting the second drive
 # sudo mkdir -p $MOUNT_POINT &> /dev/null
