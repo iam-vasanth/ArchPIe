@@ -1,13 +1,32 @@
-*.tar
-*.tar.*
-*.jar
-*.exe
-*.msi
-*.zip
-*.tgz
+# debug logs
 *.log
-*.log.*
-*.sig
 
-pkg/
-src/
+# Backup files
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+*.code-workspace
+.idea/
+*.sublime-*
+
+# Compressed files (if you're creating releases)
+*.zip
+*.tar.gz
+*.tar.bz2
+
+# Test and Misc files
+test/
+Misc/
+
+# AUR files
+/AUR
