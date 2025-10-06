@@ -1,6 +1,17 @@
-# Arch-postinstallation
-A post configuration and installation script for arch linux.
+                                                                        
+   ▄████████    ▄████████  ▄████████    ▄█    █▄       ▄███████▄  ▄█     ▄████████ 
+  ███    ███   ███    ███ ███    ███   ███    ███     ███    ███ ███    ███    ███ 
+  ███    ███   ███    ███ ███    █▀    ███    ███     ███    ███ ███▌   ███    █▀  
+  ███    ███  ▄███▄▄▄▄██▀ ███         ▄███▄▄▄▄███▄▄   ███    ███ ███▌  ▄███▄▄▄     
+▀███████████ ▀▀███▀▀▀▀▀   ███        ▀▀███▀▀▀▀███▀  ▀█████████▀  ███▌ ▀▀███▀▀▀     
+  ███    ███ ▀███████████ ███    █▄    ███    ███     ███        ███    ███    █▄  
+  ███    ███   ███    ███ ███    ███   ███    ███     ███        ███    ███    ███ 
+  ███    █▀    ███    ███ ████████▀    ███    █▀     ▄████▀      █▀     ██████████ 
+               ███    ███                                                             
+
+# Arch Linux Post-Installation Environment
+A modular, automated setup script for Arch Linux fresh installations.
 
 The Post installation script works fine on a vannila arch.
 
-## ⚠️ Work In Progress
+## **⚠️ Work In Progress ⚠️**
