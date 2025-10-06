@@ -27,6 +27,7 @@ desktop.ini
 # Test and Misc files
 test/
 Misc/
+Reference/
 
 # AUR files
 /AUR
