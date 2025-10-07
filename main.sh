@@ -2,15 +2,7 @@
 
 #!/bin/bash
 
-cat << "EOF"
-                                    
- █████╗ ██████╗  ██████╗██╗  ██╗██████╗ ██╗███████╗
-██╔══██╗██╔══██╗██╔════╝██║  ██║██╔══██╗██║██╔════╝
-███████║██████╔╝██║     ███████║██████╔╝██║█████╗  
-██╔══██║██╔══██╗██║     ██╔══██║██╔═══╝ ██║██╔══╝  
-██║  ██║██║  ██║╚██████╗██║  ██║██║     ██║███████╗
-╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝
-                                                                                                                     
+cat << "EOF"                                                                                                                     
         
    █████████                      █████      ███████████  █████         
   ███▒▒▒▒▒███                    ▒▒███      ▒▒███▒▒▒▒▒███▒▒███          
@@ -20,18 +12,12 @@ cat << "EOF"
  ▒███    ▒███  ▒███     ▒███  ███ ▒███ ▒███  ▒███         ▒███ ▒███▒▒▒  
  █████   █████ █████    ▒▒██████  ████ █████ █████        █████▒▒██████ 
 ▒▒▒▒▒   ▒▒▒▒▒ ▒▒▒▒▒      ▒▒▒▒▒▒  ▒▒▒▒ ▒▒▒▒▒ ▒▒▒▒▒        ▒▒▒▒▒  ▒▒▒▒▒▒  
-                                                                        
-                                                                        
-   ▄████████    ▄████████  ▄████████    ▄█    █▄       ▄███████▄  ▄█     ▄████████ 
-  ███    ███   ███    ███ ███    ███   ███    ███     ███    ███ ███    ███    ███ 
-  ███    ███   ███    ███ ███    █▀    ███    ███     ███    ███ ███▌   ███    █▀  
-  ███    ███  ▄███▄▄▄▄██▀ ███         ▄███▄▄▄▄███▄▄   ███    ███ ███▌  ▄███▄▄▄     
-▀███████████ ▀▀███▀▀▀▀▀   ███        ▀▀███▀▀▀▀███▀  ▀█████████▀  ███▌ ▀▀███▀▀▀     
-  ███    ███ ▀███████████ ███    █▄    ███    ███     ███        ███    ███    █▄  
-  ███    ███   ███    ███ ███    ███   ███    ███     ███        ███    ███    ███ 
-  ███    █▀    ███    ███ ████████▀    ███    █▀     ▄████▀      █▀     ██████████ 
-               ███    ███                                                                                                                                  
+                                                                          
 EOF
+
+echo ""
+echo "A modular and automated setup script for Arch Linux fresh installations"
+echo "=========================================="
 
 # Main orchestrator for Arch Linux post-installation setup
 # This script sources modules and coordinates the installation process
@@ -59,6 +45,8 @@ source "$SCRIPT_DIR/modules/plymouth.sh"
 # Configuration file
 CONFIG_FILE="$SCRIPT_DIR/config.sh"
 
+# Have to add a if to check if the user is using gnome or KDE and save it
+
 # Main execution
 main() {
     echo ""
@@ -76,7 +64,7 @@ main() {
         exit 1
     fi
     
-    # Ask for sudo password once and keep it alive
+    # Sudo password once and keep it alive
     log_info "This script requires sudo privileges"
     keep_sudo_alive
     
@@ -85,7 +73,7 @@ main() {
     echo -e "${BLUE}  COLLECTING CONFIGURATION OPTIONS${NC}"
     echo -e "${BLUE}========================================${NC}"
     
-    # Collect ALL user input upfront
+    # Collecting user choices
     collect_firewall_choice
     collect_virt_manager_choice
     collect_drive_info
@@ -160,5 +148,4 @@ EOF
     log_info "Configuration saved to $CONFIG_FILE"
 }
 
-# Run main function
 main "$@"

@@ -31,6 +31,10 @@ install_flatpak_packages() {
         com.usebottles.bottles
         org.libreoffice.LibreOffice
         org.localsend.localsend_app
+        app.zen_browser.zen
+        org.gnome.Firmware
+        md.obsidian.Obsidian
+        com.protonvpn.www
     )
     
     local total=${#FLATPAK_PACKAGES[@]}
@@ -55,5 +59,5 @@ install_flatpak_packages() {
     done
     
     echo ""
-    log_info "✓ Flatpak packages installation completed (system-wide for Btrfs compatibility)"
+    log_info "✓ Flatpak packages installation completed"
 }
