@@ -31,14 +31,14 @@ install_pacman_packages() {
     local total=${#PACMAN_PACKAGES[@]}
     echo -e "${YELLOW}Installing $total pacman packages...${NC}"
     
-    if sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}" > /tmp/pacman_install.log 2>&1; then
+    if sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}" > $LOG_DIR/pacman_install.log 2>&1; then
         show_progress "$total" "$total"
         echo ""
         log_info "✓ Pacman packages installed successfully"
     else
         echo ""
         log_error "✗ Failed to install pacman packages"
-        log_error "Check /tmp/pacman_install.log for details"
+        log_error "Check $LOG_DIR/pacman_install.log for details"
         return 1
     fi
 }

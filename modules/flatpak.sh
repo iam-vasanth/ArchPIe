@@ -47,13 +47,13 @@ install_flatpak_packages() {
             ((current++))
             show_progress "$current" "$total"
         else
-            if sudo flatpak install -y --system flathub "$pkg" > /tmp/flatpak_install.log 2>&1; then
+            if sudo flatpak install -y --system flathub "$pkg" > $LOG_DIR/flatpak_install.log 2>&1; then
                 ((current++))
                 show_progress "$current" "$total"
             else
                 echo ""
                 log_error "✗ Failed to install $pkg"
-                log_error "Check /tmp/flatpak_install.log for details"
+                log_error "Check $LOG_DIR/flatpak_install.log for details"
             fi
         fi
     done
