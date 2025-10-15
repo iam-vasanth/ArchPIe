@@ -13,7 +13,7 @@ install_yay() {
     local YAY_DIR="$HOME/.cache/yay-install"
     rm -rf "$YAY_DIR"
     
-    git clone https://aur.archlinux.org/yay.git "$YAY_DIR" > $LOG_DIR/yay_install.log 2>&1
+    git clone https://aur.archlinux.org/yay.git "$YAY_DIR" >> $LOG_DIR/yay_install.log 2>&1
     cd "$YAY_DIR" || { log_error "Failed to enter $YAY_DIR"; return 1; }
     
     if makepkg -si --noconfirm >> $LOG_DIR/yay_install.log 2>&1; then
@@ -46,7 +46,7 @@ install_aur_packages() {
     local total=${#AUR_PACKAGES[@]}
     echo -e "${YELLOW}Installing $total AUR packages...${NC}"
     
-    if yay -S --needed --noconfirm "${AUR_PACKAGES[@]}" > $LOG_DIR/aur_install.log 2>&1; then
+    if yay -S --needed --noconfirm "${AUR_PACKAGES[@]}" >> $LOG_DIR/aur_install.log 2>&1; then
         show_progress "$total" "$total"
         echo ""
         log_info "✓ AUR packages installed successfully"

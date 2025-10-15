@@ -60,7 +60,7 @@ detect_and_install_gpu_drivers() {
     # Install GPU packages
     if [[ ${#GPU_PACKAGES[@]} -gt 0 ]]; then
         log_info "Installing GPU drivers and 32-bit libraries for gaming..."
-        if sudo pacman -S --needed --noconfirm "${GPU_PACKAGES[@]}" > $LOG_DIR/gpu_install.log 2>&1; then
+        if sudo pacman -S --needed --noconfirm "${GPU_PACKAGES[@]}" >> $LOG_DIR/gpu_install.log 2>&1; then
             log_info "✓ GPU drivers installed successfully"
         else
             log_error "✗ Failed to install GPU drivers"

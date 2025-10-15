@@ -39,7 +39,7 @@ install_virt_manager() {
     local total=${#VIRT_PACKAGES[@]}
     echo -e "${YELLOW}Installing $total virtualization packages...${NC}"
     
-    if sudo pacman -S --needed --noconfirm "${VIRT_PACKAGES[@]}" > $LOG_DIR/virt_install.log 2>&1; then
+    if sudo pacman -S --needed --noconfirm "${VIRT_PACKAGES[@]}" >> $LOG_DIR/virt_install.log 2>&1; then
         show_progress "$total" "$total"
         echo ""
         log_info "✓ Virtualization packages installed successfully"
