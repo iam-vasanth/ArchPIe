@@ -3,7 +3,7 @@
 #!/bin/bash
 
 cat << "EOF"                                                                                                                     
-        
+
    █████████                      █████      ███████████  █████         
   ███▒▒▒▒▒███                    ▒▒███      ▒▒███▒▒▒▒▒███▒▒███          
  ▒███    ▒███  ████████   ██████  ▒███████   ▒███    ▒███ ▒███   ██████ 
@@ -41,6 +41,7 @@ source "$SCRIPT_DIR/modules/virt.sh"
 source "$SCRIPT_DIR/modules/firewall.sh"
 source "$SCRIPT_DIR/modules/drives.sh"
 source "$SCRIPT_DIR/modules/plymouth.sh"
+source "$SCRIPT_DIR/modules/shellconfig.sh"
 
 # Have to add a if to check if the user is using gnome or KDE and save it
 
@@ -73,6 +74,7 @@ main() {
     # Collecting user choices
     collect_firewall_choice
     collect_virt_manager_choice
+    collect_shell_config_choice
     collect_drive_info
     
     echo ""
@@ -106,6 +108,7 @@ main() {
     echo -e "${BLUE}========================================${NC}"
     
     # Run configurations
+    
     configure_firewall
     configure_firewall_for_libvirt
     configure_additional_drives
